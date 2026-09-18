@@ -1,0 +1,27 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# wrangler / miniflare
+.wrangler/
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+
+# env
+.env
+.env.*
+!.env.example
+
+# build
+dist/
+.next/
+.turbo/
+coverage/
+*.tsbuildinfo
+
+# os / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
