@@ -1,6 +1,6 @@
-# Merchant API (Phase 1–3)
+# Merchant API (Phase 1–4)
 
-The merchant control plane, cURL importer, and response mapping. There is no customer checkout, Telegram, MCP, or on-chain payment yet. Payments exist as a `PaymentProvider` port and an in-memory `MockPaymentProvider` for tests.
+The merchant control plane, cURL importer, response mapping, and the payment/entitlement state machine. Checkout UI, Telegram, MCP, and on-chain settlement are later. The production payment provider is still `mock` (D1-backed). `MockPaymentProvider` remains the in-memory unit-test double.
 
 Base path: `/v1`. JSON in, JSON out. Sessions use the `obscurus_session` HTTP-only cookie.
 
@@ -42,6 +42,21 @@ After write, only `hint` is returned. Plaintext is never listed.
 
 - `GET /v1/invocations`
 - `GET /v1/invocations/:id`
+
+**Payments (merchant)**
+
+- `GET /v1/payments`
+- `GET /v1/payments/:id`
+
+Merchant payment JSON is `id`, `endpoint_id`, `invocation_id`, `amount`, `asset`, `state`, `payment_ref`, `provider`, `expires_at`, `checkout_url`, timestamps. It never includes a wallet, address, or transaction identity.
+
+**Paid invoke (no customer account)**
+
+- `POST /v1/invoke` `{ endpoint_id, input }` — creates an invocation and a `CREATED` → `AWAITING_PAYMENT` charge. `PER_REQUEST` only.
+- `GET /v1/pay/:id`
+- `POST /v1/pay/:id/verify` — idempotent. Issues a single-use entitlement when the payment becomes `PAID`.
+- `POST /v1/pay/:id/fulfill` — claims the entitlement and runs the merchant API at most once.
+- `POST /v1/pay/:id/mock-complete` — development only. Marks the next verify as matched. Forbidden in production.
 
 ## Create endpoint body
 
@@ -101,3 +116,9 @@ Unresolved: form-urlencoded bodies as customer inputs (JSON only today); nested 
 ## Phase 3 notes
 
 Response mapping is stored on the endpoint (`response_mode`, `response_select`, `response_template`). JSONPath is a conservative subset: dotted keys and numeric indexes, optional `$.` prefix. Templates only substitute values; they do not evaluate expressions.
+
+## Phase 4 notes
+
+States: `CREATED` → `AWAITING_PAYMENT` → `CONFIRMING` → `PAID` → `FULFILLING` → `FULFILLED`, plus `FAILED` | `EXPIRED` | `REFUNDED`. `Refund()` is not implemented. `CREDIT_PACK`, `SUBSCRIPTION`, and `ONE_TIME_UNLOCK` are reserved names and rejected at invoke time.
+
+Merchant test invokes (`POST /v1/endpoints/:id/test`) still execute without a payment. Paid traffic must verify, then fulfill. A claimed entitlement cannot run the executor a second time. Merchant API errors fail the invocation and leave the charge `PAID` (no silent refund). Unpaid payments expire after 30 minutes on the next verify.

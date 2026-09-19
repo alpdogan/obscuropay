@@ -11,7 +11,6 @@ import {
   parseHeaders,
   parseInputSchema,
   parseResponseMapping,
-  renderTemplate,
   secretHint,
   secretNameFromHeader,
   slugify,
@@ -22,7 +21,7 @@ import {
 import { Hono } from "hono";
 import { requireMerchant } from "../auth.ts";
 import { nowSeconds } from "../clock.ts";
-import { ExecutorError, executeMerchantRequest } from "../executor.ts";
+import { executeStoredEndpoint } from "../execute-endpoint.ts";
 import { readJson } from "../http/json.ts";
 import { presentEndpoint, presentInvocation } from "../presenters.ts";
 import { findEndpoint, insertEndpoint, updateEndpoint } from "../repos/endpoints.ts";
@@ -205,39 +204,10 @@ endpointRoutes.post("/:id/test", async (c) => {
     completed_at: null,
   };
   await insertInvocation(c.env.DB, invocation);
-
-  try {
-    const headers = await resolveHeaders(c, JSON.parse(endpoint.headers_json) as HeaderSpec[]);
-    const renderedBody = endpoint.body_template ? renderTemplate(endpoint.body_template, input) : null;
-    const result = await executeMerchantRequest({
-      method: endpoint.method,
-      url: endpoint.url,
-      headers,
-      body: renderedBody,
-      allowHttp: !isProduction(c.env),
-    });
-    invocation.status = result.status >= 200 && result.status < 300 ? "FULFILLED" : "FAILED";
-    invocation.http_status = result.status;
-    const mapped = transformResponse(
-      result.body,
-      parseResponseMapping({
-        mode: endpoint.response_mode,
-        select: endpoint.response_select,
-        template: endpoint.response_template,
-      }),
-    );
-    invocation.output_preview = mapped.slice(0, 2048);
-    invocation.completed_at = nowSeconds();
-    await updateInvocation(c.env.DB, invocation);
-  } catch (error) {
-    invocation.status = "FAILED";
-    invocation.error_class = error instanceof ExecutorError ? error.reason : "executor_error";
-    invocation.completed_at = nowSeconds();
-    await updateInvocation(c.env.DB, invocation);
-  }
-
-  const stored = await findInvocation(c.env.DB, c.get("merchantId"), invocation.id);
-  return c.json({ invocation: presentInvocation(stored ?? invocation) }, invocation.status === "FULFILLED" ? 200 : 502);
+  const executed = await executeStoredEndpoint(c.env, endpoint, invocation, input);
+  await updateInvocation(c.env.DB, executed);
+  const stored = await findInvocation(c.env.DB, c.get("merchantId"), executed.id);
+  return c.json({ invocation: presentInvocation(stored ?? executed) }, executed.status === "FULFILLED" ? 200 : 502);
 });
 
 endpointRoutes.post("/:id/preview-response", async (c) => {
@@ -303,24 +273,4 @@ function buildEndpointRow(args: {
     created_at: args.now,
     updated_at: updated,
   };
-}
-
-async function resolveHeaders(
-  c: { env: Env; get: (key: "merchantId") => string },
-  specs: HeaderSpec[],
-): Promise<Record<string, string>> {
-  const box = AesGcmSecretBox.fromBase64(c.env.SECRET_KEK);
-  const headers: Record<string, string> = {};
-  for (const spec of specs) {
-    if ("secretId" in spec) {
-      const secret = await findSecret(c.env.DB, c.get("merchantId"), spec.secretId);
-      if (!secret) {
-        throw notFound("secret");
-      }
-      headers[spec.name] = await box.decrypt(secret.ciphertext);
-    } else {
-      headers[spec.name] = spec.value;
-    }
-  }
-  return headers;
 }

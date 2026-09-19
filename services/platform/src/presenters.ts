@@ -1,5 +1,5 @@
 import type { HeaderSpec } from "@obscurus/core";
-import type { EndpointRow, InvocationRow } from "./repos/types.ts";
+import type { EndpointRow, InvocationRow, PaymentRow } from "./repos/types.ts";
 
 export function presentEndpoint(row: EndpointRow) {
   const headers = JSON.parse(row.headers_json) as HeaderSpec[];
@@ -45,5 +45,22 @@ export function presentInvocation(row: InvocationRow) {
     http_status: row.http_status,
     created_at: row.created_at,
     completed_at: row.completed_at,
+  };
+}
+
+export function presentPayment(row: PaymentRow) {
+  return {
+    id: row.id,
+    endpoint_id: row.endpoint_id,
+    invocation_id: row.invocation_id,
+    amount: row.amount,
+    asset: row.asset,
+    state: row.state,
+    payment_ref: row.payment_ref,
+    provider: row.provider,
+    expires_at: row.expires_at,
+    checkout_url: `/pay/${row.id}`,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
   };
 }

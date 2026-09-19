@@ -9,6 +9,34 @@ export type {
   PaymentRecord,
   VerificationResult,
 } from "./payment/provider.ts";
+export {
+  IMPLEMENTED_PRICING_TYPES,
+  PRICING_TYPES,
+  assertImplementedPricing,
+  parsePricingType,
+  type ImplementedPricingType,
+  type PricingType,
+} from "./payment/pricing.ts";
+export {
+  ENTITLEMENT_STATES,
+  claimEntitlement,
+  createPerRequestEntitlement,
+  isClaimed,
+  type Entitlement,
+  type EntitlementState,
+} from "./payment/entitlement.ts";
+export {
+  applyVerification,
+  beginFulfillment,
+  canIssueEntitlement,
+  completeFulfillment,
+  expirePayment,
+  failPayment,
+  isExpired,
+  openPayment,
+  refundPayment,
+  requirePaidForFulfill,
+} from "./payment/lifecycle.ts";
 export { AesGcmSecretBox, secretHint, type SecretBox } from "./secrets/box.ts";
 export {
   assertHttpMethod,

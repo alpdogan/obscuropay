@@ -57,3 +57,32 @@ export type InvocationRow = {
   created_at: number;
   completed_at: number | null;
 };
+
+export type PaymentRow = {
+  id: string;
+  merchant_id: string;
+  project_id: string | null;
+  endpoint_id: string | null;
+  invocation_id: string | null;
+  amount: string;
+  asset: string;
+  state: string;
+  payment_ref: string;
+  provider: string;
+  expires_at: number | null;
+  mock_ready: number;
+  created_at: number;
+  updated_at: number;
+};
+
+export type EntitlementRow = {
+  id: string;
+  merchant_id: string;
+  endpoint_id: string;
+  invocation_id: string;
+  payment_id: string;
+  pricing_type: string;
+  status: string;
+  claimed_at: number | null;
+  created_at: number;
+};

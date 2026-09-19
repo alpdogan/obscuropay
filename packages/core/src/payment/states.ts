@@ -1,3 +1,5 @@
+import { conflict } from "../errors.ts";
+
 export const PAYMENT_STATES = [
   "CREATED",
   "AWAITING_PAYMENT",
@@ -30,6 +32,6 @@ export function canTransition(from: PaymentState, to: PaymentState): boolean {
 
 export function assertTransition(from: PaymentState, to: PaymentState): void {
   if (!canTransition(from, to)) {
-    throw new Error(`illegal_payment_transition:${from}->${to}`);
+    throw conflict("illegal_payment_transition", `Cannot transition payment from ${from} to ${to}`);
   }
 }

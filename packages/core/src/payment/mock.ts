@@ -1,4 +1,5 @@
 import { newId, newPaymentRef } from "../ids.ts";
+import { openPayment } from "./lifecycle.ts";
 import type { CreatePaymentInput, PaymentProvider, PaymentRecord, VerificationResult } from "./provider.ts";
 import { assertTransition } from "./states.ts";
 
@@ -11,17 +12,19 @@ export class MockPaymentProvider implements PaymentProvider {
   private readonly completable = new Set<string>();
 
   async createPayment(input: CreatePaymentInput): Promise<PaymentRecord> {
-    const payment: PaymentRecord = {
+    const created: PaymentRecord = {
       id: newId("payment"),
       merchantId: input.merchantId,
       endpointId: input.endpointId,
       invocationId: input.invocationId,
       amount: input.amount,
       asset: input.asset,
-      state: "AWAITING_PAYMENT",
+      state: "CREATED",
       paymentRef: newPaymentRef(),
       provider: this.name,
+      expiresAt: input.expiresAt ?? null,
     };
+    const payment = openPayment(created);
     this.payments.set(payment.id, payment);
     return payment;
   }

@@ -73,9 +73,11 @@ sequenceDiagram
 5. **Expiry.** Durable Object alarm plus cron sweep moves `AWAITING_PAYMENT` to `EXPIRED`. Checkout refuses expired ids.
 6. **No client truth.** Checkout, Telegram, and MCP may *ask* status. They may not *set* `PAID`.
 
-## Mock provider (Phase 1)
+## Mock provider (Phase 4)
 
-Creates payments, exposes a development “complete” action protected by non-production environment checks. Never deployed as the production provider.
+`packages/core` ships an in-memory `MockPaymentProvider` for unit tests. The platform Worker persists the same states in D1. `POST /v1/pay/:id/mock-complete` marks the next verify as matched and is forbidden when `ENVIRONMENT=production`. Never use the mock as the production chain adapter.
+
+Verify is idempotent: two matched events produce one `PAID` and one unused entitlement. Fulfill claims that entitlement and runs the HTTP executor at most once.
 
 ## EVM provider (Phase 5)
 

@@ -75,3 +75,7 @@ export async function findInvocation(
     .bind(invocationId, merchantId)
     .first<InvocationRow>();
 }
+
+export async function findInvocationById(db: D1Database, invocationId: string): Promise<InvocationRow | null> {
+  return db.prepare("SELECT * FROM invocations WHERE id = ?").bind(invocationId).first<InvocationRow>();
+}

@@ -39,6 +39,10 @@ export async function findEndpoint(db: D1Database, merchantId: string, endpointI
     .first<EndpointRow>();
 }
 
+export async function findEndpointById(db: D1Database, endpointId: string): Promise<EndpointRow | null> {
+  return db.prepare("SELECT * FROM endpoints WHERE id = ?").bind(endpointId).first<EndpointRow>();
+}
+
 export async function updateEndpoint(db: D1Database, row: EndpointRow): Promise<void> {
   await db
     .prepare(

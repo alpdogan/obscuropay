@@ -5,6 +5,9 @@ import { authRoutes } from "./routes/auth.ts";
 import { curlRoutes } from "./routes/curl.ts";
 import { endpointRoutes } from "./routes/endpoints.ts";
 import { invocationRoutes } from "./routes/invocations.ts";
+import { invokeRoutes } from "./routes/invoke.ts";
+import { payRoutes } from "./routes/pay.ts";
+import { paymentRoutes } from "./routes/payments.ts";
 import { projectRoutes } from "./routes/projects.ts";
 import { secretRoutes } from "./routes/secrets.ts";
 
@@ -35,5 +38,8 @@ export function createApp() {
   app.route("/v1/endpoints", endpointRoutes);
   app.route("/v1/secrets", secretRoutes);
   app.route("/v1/invocations", invocationRoutes);
+  app.route("/v1/payments", paymentRoutes);
+  app.route("/v1/pay", payRoutes);
+  app.route("/v1/invoke", invokeRoutes);
   return app;
 }

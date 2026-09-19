@@ -5,6 +5,7 @@ const prefixes = {
   secret: "sec",
   invocation: "inv",
   payment: "pay",
+  entitlement: "ent",
   session: "sess",
 } as const;
 

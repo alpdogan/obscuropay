@@ -6,6 +6,7 @@ export type CreatePaymentInput = {
   invocationId: string;
   amount: string;
   asset: string;
+  expiresAt?: number | null;
 };
 
 export type PaymentRecord = {
@@ -18,6 +19,7 @@ export type PaymentRecord = {
   state: PaymentState;
   paymentRef: string;
   provider: string;
+  expiresAt?: number | null;
 };
 
 export type VerificationResult = {

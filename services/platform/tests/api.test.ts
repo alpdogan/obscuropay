@@ -205,3 +205,101 @@ describe("merchant API", () => {
     expect(stolen.status).toBe(404);
   });
 });
+
+describe("payment state machine", () => {
+  it("requires payment, verifies and fulfills idempotently, and hides wallets", async () => {
+    const created = await register("payer@example.com");
+    const session = cookie(created);
+    const projectRes = await SELF.fetch("https://obscurus.test/v1/projects", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: session },
+      body: JSON.stringify({ name: "Paid" }),
+    });
+    const project = ((await projectRes.json()) as { project: { id: string } }).project;
+    const endpointRes = await SELF.fetch("https://obscurus.test/v1/endpoints", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: session },
+      body: JSON.stringify({
+        project_id: project.id,
+        name: "lookup",
+        method: "GET",
+        url: "https://example.com/",
+        input_schema: { fields: [] },
+        price_amount: "0.25",
+      }),
+    });
+    const endpoint = ((await endpointRes.json()) as { endpoint: { id: string } }).endpoint;
+
+    const invoked = await SELF.fetch("https://obscurus.test/v1/invoke", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ endpoint_id: endpoint.id, input: {} }),
+    });
+    expect(invoked.status).toBe(201);
+    const started = (await invoked.json()) as {
+      payment: { id: string; state: string; checkout_url: string };
+      invocation: { status: string };
+    };
+    expect(started.payment.state).toBe("AWAITING_PAYMENT");
+    expect(started.invocation.status).toBe("AWAITING_PAYMENT");
+    expect(started.payment.checkout_url).toBe(`/pay/${started.payment.id}`);
+    expect(JSON.stringify(started)).not.toMatch(/wallet|address|0x[a-fA-F0-9]{40}/);
+
+    const unpaidFulfill = await SELF.fetch(`https://obscurus.test/v1/pay/${started.payment.id}/fulfill`, {
+      method: "POST",
+    });
+    expect(unpaidFulfill.status).toBe(409);
+
+    const listed = await SELF.fetch("https://obscurus.test/v1/payments", { headers: { cookie: session } });
+    expect(listed.status).toBe(200);
+    const listedJson = await listed.json();
+    expect(JSON.stringify(listedJson)).not.toMatch(/wallet|address|0x[a-fA-F0-9]{40}/);
+
+    const pendingVerify = await SELF.fetch(`https://obscurus.test/v1/pay/${started.payment.id}/verify`, {
+      method: "POST",
+    });
+    expect(((await pendingVerify.json()) as { matched: boolean }).matched).toBe(false);
+
+    const complete = await SELF.fetch(`https://obscurus.test/v1/pay/${started.payment.id}/mock-complete`, {
+      method: "POST",
+    });
+    expect(complete.status).toBe(200);
+
+    const firstVerify = await SELF.fetch(`https://obscurus.test/v1/pay/${started.payment.id}/verify`, {
+      method: "POST",
+    });
+    const verified = (await firstVerify.json()) as { matched: boolean; payment: { state: string } };
+    expect(verified.matched).toBe(true);
+    expect(verified.payment.state).toBe("PAID");
+
+    const secondVerify = await SELF.fetch(`https://obscurus.test/v1/pay/${started.payment.id}/verify`, {
+      method: "POST",
+    });
+    expect(((await secondVerify.json()) as { payment: { state: string } }).payment.state).toBe("PAID");
+
+    const firstFulfill = await SELF.fetch(`https://obscurus.test/v1/pay/${started.payment.id}/fulfill`, {
+      method: "POST",
+    });
+    expect(firstFulfill.status).toBe(200);
+    const fulfilled = (await firstFulfill.json()) as {
+      payment: { state: string };
+      invocation: { id: string; status: string; http_status: number };
+    };
+    expect(fulfilled.payment.state).toBe("FULFILLED");
+    expect(fulfilled.invocation.status).toBe("FULFILLED");
+
+    const secondFulfill = await SELF.fetch(`https://obscurus.test/v1/pay/${started.payment.id}/fulfill`, {
+      method: "POST",
+    });
+    expect(secondFulfill.status).toBe(200);
+    const again = (await secondFulfill.json()) as { invocation: { id: string; status: string } };
+    expect(again.invocation.id).toBe(fulfilled.invocation.id);
+    expect(again.invocation.status).toBe("FULFILLED");
+
+    const other = await register("other-pay@example.com");
+    const stolen = await SELF.fetch(`https://obscurus.test/v1/payments/${started.payment.id}`, {
+      headers: { cookie: cookie(other) },
+    });
+    expect(stolen.status).toBe(404);
+  });
+});
