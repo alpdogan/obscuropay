@@ -7,8 +7,8 @@
   },
   "scripts": {
     "dev": "pnpm --filter @obscurus/platform dev",
-    "test": "pnpm --filter @obscurus/core test && pnpm --filter @obscurus/platform test",
-    "typecheck": "pnpm --filter @obscurus/core typecheck && pnpm --filter @obscurus/platform typecheck",
+    "test": "pnpm --filter @obscurus/core test && pnpm --filter @obscurus/platform test && pnpm --filter @obscurus/contracts test",
+    "typecheck": "pnpm --filter @obscurus/core typecheck && pnpm --filter @obscurus/platform typecheck && pnpm --filter @obscurus/contracts typecheck",
     "lint": "pnpm typecheck"
   }
 }

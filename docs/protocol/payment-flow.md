@@ -81,20 +81,21 @@ Verify is idempotent: two matched events produce one `PAID` and one unused entit
 
 ## EVM provider (Phase 5)
 
-Recommended network and asset: Base Sepolia, Circle USDC `0x036CbD53842c5426634e7929541eC2318f3dCF7e`.
+Network and asset: Base Sepolia, Circle USDC `0x036CbD53842c5426634e7929541eC2318f3dCF7e`.
 
-Contract (conceptual):
+Implemented in [`contracts/`](../../contracts/README.md) as `ObscurusPay` (Foundry, OpenZeppelin, no proxy):
 
 - `pay(bytes32 paymentRef, address merchant, address asset, uint256 amount)`
-- Pulls or receives USDC, sends `amount - fee` to merchant, `fee` to treasury
+- Pulls the constructor USDC, sends `amount - fee` to merchant, `fee` to treasury
 - Emits `PaymentReceived(paymentRef, merchant, asset, amount, fee)`
-- Reverts on duplicate `paymentRef`, wrong asset, wrong amount
+- Reverts on duplicate `paymentRef`, wrong asset, zero amount, or `feeBps` above 10%
+- Constructor reverts on Ethereum mainnet and any chain other than Base Sepolia / Anvil
 
 Never stored on-chain: Telegram IDs, names, emails, query text, API arguments, merchant API URLs.
 
-Admin: fee recipient and pause (if any) documented. No upgrade proxy in v1. No owner sweep of customer funds. Independent audit before mainnet.
+Admin: owner may set treasury, `feeBps` (capped), and pause. There is no withdraw or token rescue. Independent audit before mainnet. **Do not deploy mainnet.**
 
-Verification: Worker observes the event (RPC poll via Queue/Cron or a later indexer). Matches `paymentRef`, asset, amount. Then `PAID`.
+The Worker still verifies events (`paymentRef`, asset, amount) before `PAID`. A Solidity adapter is not wired into `PaymentProvider` yet.
 
 WalletConnect **AppKit** is the wallet connection. Obscurus is the processor. Not WalletConnect Pay.
 

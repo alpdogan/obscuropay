@@ -1,0 +1,12 @@
+{
+  "name": "@obscurus/contracts",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "test": "PATH=\"$HOME/.foundry/bin:$PATH\" forge test -vv",
+    "typecheck": "PATH=\"$HOME/.foundry/bin:$PATH\" forge build"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.4.0"
+  }
+}
