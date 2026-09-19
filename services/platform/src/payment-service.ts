@@ -26,8 +26,20 @@ import { executeStoredEndpoint } from "./execute-endpoint.ts";
 import { findEntitlementByPayment, insertEntitlement, updateEntitlement } from "./repos/entitlements.ts";
 import { findEndpointById } from "./repos/endpoints.ts";
 import { findInvocationById, insertInvocation, updateInvocation } from "./repos/invocations.ts";
-import { findPaymentById, insertPayment, updatePayment } from "./repos/payments.ts";
+import { insertPayment, updatePayment } from "./repos/payments.ts";
 import type { EntitlementRow, EndpointRow, InvocationRow, PaymentRow } from "./repos/types.ts";
+import { emitMerchantWebhooks } from "./webhooks/dispatch.ts";
+
+async function safeEmit(
+  env: Env,
+  input: Parameters<typeof emitMerchantWebhooks>[1],
+): Promise<void> {
+  try {
+    await emitMerchantWebhooks(env, input);
+  } catch {
+    // Delivery failures must not roll back payment truth.
+  }
+}
 
 const PAYMENT_TTL_SECONDS = 30 * 60;
 
@@ -121,6 +133,26 @@ export async function startPaidInvocation(
   };
   await insertInvocation(env.DB, invocation);
   await insertPayment(env.DB, payment);
+  await safeEmit(env, {
+    merchantId: endpoint.merchant_id,
+    projectId: endpoint.project_id,
+    event: "payment.created",
+    paymentId: payment.id,
+    invocationId: invocation.id,
+    endpoint: endpoint.slug,
+    amount: payment.amount,
+    asset: payment.asset,
+  });
+  await safeEmit(env, {
+    merchantId: endpoint.merchant_id,
+    projectId: endpoint.project_id,
+    event: "invocation.started",
+    paymentId: payment.id,
+    invocationId: invocation.id,
+    endpoint: endpoint.slug,
+    amount: payment.amount,
+    asset: payment.asset,
+  });
   return { endpoint, invocation, payment };
 }
 
@@ -183,6 +215,19 @@ export async function verifyStoredPayment(env: Env, payment: PaymentRow): Promis
     if (invocation && invocation.status === "AWAITING_PAYMENT") {
       await updateInvocation(env.DB, { ...invocation, status: "PAID" });
     }
+    const endpoint = next.endpoint_id ? await findEndpointById(env.DB, next.endpoint_id) : null;
+    if (endpoint) {
+      await safeEmit(env, {
+        merchantId: next.merchant_id,
+        projectId: endpoint.project_id,
+        event: "payment.confirmed",
+        paymentId: next.id,
+        invocationId: next.invocation_id,
+        endpoint: endpoint.slug,
+        amount: next.amount,
+        asset: next.asset,
+      });
+    }
   }
   return { payment: next, entitlement };
 }
@@ -228,7 +273,27 @@ export async function fulfillStoredPayment(env: Env, payment: PaymentRow): Promi
   if (executed.status === "FULFILLED") {
     const fulfilled = applyRecord(payment, completeFulfillment(beginFulfillment(record)), nowSeconds());
     await updatePayment(env.DB, fulfilled);
+    await safeEmit(env, {
+      merchantId: endpoint.merchant_id,
+      projectId: endpoint.project_id,
+      event: "invocation.completed",
+      paymentId: payment.id,
+      invocationId: executed.id,
+      endpoint: endpoint.slug,
+      amount: payment.amount,
+      asset: payment.asset,
+    });
     return { payment: fulfilled, invocation: executed };
   }
+  await safeEmit(env, {
+    merchantId: endpoint.merchant_id,
+    projectId: endpoint.project_id,
+    event: "invocation.failed",
+    paymentId: payment.id,
+    invocationId: executed.id,
+    endpoint: endpoint.slug,
+    amount: payment.amount,
+    asset: payment.asset,
+  });
   return { payment, invocation: executed };
 }

@@ -65,6 +65,23 @@ export async function saveSettlementAction(formData: FormData) {
   redirect("/settings");
 }
 
+export async function createWebhookAction(formData: FormData) {
+  await api("/v1/webhooks", {
+    method: "POST",
+    body: JSON.stringify({
+      project_id: String(formData.get("project_id") ?? ""),
+      url: String(formData.get("url") ?? ""),
+    }),
+  });
+  redirect("/webhooks");
+}
+
+export async function retryWebhookAction(formData: FormData) {
+  const id = String(formData.get("delivery_id") ?? "");
+  await api(`/v1/webhooks/deliveries/${id}/retry`, { method: "POST" });
+  redirect("/webhooks");
+}
+
 export async function connectTelegramAction(formData: FormData) {
   await api("/v1/integrations/telegram", {
     method: "POST",

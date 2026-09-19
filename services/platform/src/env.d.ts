@@ -5,6 +5,7 @@ interface Env {
   CHECKOUT_ORIGIN?: string;
   PLATFORM_PUBLIC_ORIGIN?: string;
   TELEGRAM_STUB?: string;
+  WEBHOOK_STUB?: string;
   TEST_MIGRATIONS?: { name: string; queries: string[] }[];
 }
 

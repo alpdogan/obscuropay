@@ -89,6 +89,18 @@ export {
 } from "./telegram/parse.ts";
 export { parseInvokeResult, paymentRequiredBody, type PaymentRequiredBody } from "./http/payment-required.ts";
 export {
+  WEBHOOK_EVENTS,
+  WEBHOOK_MAX_ATTEMPTS,
+  WEBHOOK_TOLERANCE_SECONDS,
+  assertWebhookPayloadSafe,
+  buildWebhookPayload,
+  nextWebhookAttemptAt,
+  parseWebhookEvents,
+  signWebhook,
+  verifyWebhookSignature,
+  type WebhookEvent,
+} from "./webhooks/sign.ts";
+export {
   assertNoSilentMcpSpend,
   endpointToMcpTool,
   inputSchemaToJsonSchema,

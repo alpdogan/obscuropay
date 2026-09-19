@@ -1,6 +1,6 @@
-# Merchant API (Phase 1–12)
+# Merchant API (Phase 1–13)
 
-The merchant control plane, cURL importer, response mapping, payment/entitlement state machine, checkout APIs, the Next.js merchant dashboard, Telegram, MCP, and HTTP 402. A live chain adapter is later. The production payment provider is still `mock` (D1-backed) until `ObscurusPay` is deployed on Base Sepolia. `MockPaymentProvider` remains the in-memory unit-test double.
+The merchant control plane, cURL importer, response mapping, payment/entitlement state machine, checkout APIs, the Next.js merchant dashboard, Telegram, MCP, HTTP 402, and signed webhooks. A live chain adapter is later. The production payment provider is still `mock` (D1-backed) until `ObscurusPay` is deployed on Base Sepolia. `MockPaymentProvider` remains the in-memory unit-test double.
 
 Base path: `/v1`. JSON in, JSON out. Sessions use the `obscurus_session` HTTP-only cookie.
 
@@ -75,6 +75,15 @@ See [Telegram adapter](telegram.md).
 - `POST /v1/mcp/:projectId` — `tools/list` and `tools/call`. Calls without `payment_id` return `payment_required`. `paid=true` is rejected.
 
 See [MCP adapter](mcp.md).
+
+**Webhooks**
+
+- `POST /v1/webhooks` `{ project_id, url, events? }` — returns the HMAC secret once plus a verification example.
+- `GET /v1/webhooks` — URL, events, secret hint, last delivery health.
+- `GET /v1/webhooks/:id/deliveries`
+- `POST /v1/webhooks/deliveries/:id/retry`
+
+See [Webhooks](webhooks.md). Deliveries are signed with `X-Obscurus-Signature` and `X-Obscurus-Timestamp`. Payloads never include a customer wallet by default.
 
 **Paid invoke (no customer account)**
 

@@ -16,6 +16,7 @@ export default defineWorkersConfig(async () => {
               ENVIRONMENT: "development",
               CHECKOUT_ORIGIN: "https://pay.obscurus.test",
               TELEGRAM_STUB: "1",
+              WEBHOOK_STUB: "1",
               TEST_MIGRATIONS: migrations,
             },
           },

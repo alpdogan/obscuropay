@@ -8,6 +8,8 @@ const prefixes = {
   entitlement: "ent",
   session: "sess",
   telegram: "tgint",
+  webhook: "wh",
+  delivery: "whd",
 } as const;
 
 export type IdKind = keyof typeof prefixes;

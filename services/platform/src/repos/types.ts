@@ -103,6 +103,32 @@ export type TelegramIntegrationRow = {
   updated_at: number;
 };
 
+export type WebhookEndpointRow = {
+  id: string;
+  merchant_id: string;
+  project_id: string;
+  url: string;
+  secret_id: string;
+  events_json: string;
+  created_at: number;
+  updated_at: number;
+};
+
+export type WebhookDeliveryRow = {
+  id: string;
+  merchant_id: string;
+  webhook_id: string;
+  event: string;
+  payload_json: string;
+  status: string;
+  attempt_count: number;
+  last_http_status: number | null;
+  last_error: string | null;
+  next_attempt_at: number | null;
+  created_at: number;
+  updated_at: number;
+};
+
 export type TelegramSessionRow = {
   invocation_id: string;
   merchant_id: string;

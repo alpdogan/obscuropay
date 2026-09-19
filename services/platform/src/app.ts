@@ -14,6 +14,7 @@ import { paymentRoutes } from "./routes/payments.ts";
 import { projectRoutes } from "./routes/projects.ts";
 import { secretRoutes } from "./routes/secrets.ts";
 import { mcpGatewayRoutes, mcpMerchantRoutes } from "./routes/mcp.ts";
+import { webhookRoutes } from "./routes/webhooks.ts";
 import { telegramMerchantRoutes, telegramWebhookRoutes } from "./routes/telegram.ts";
 
 export function createApp() {
@@ -50,6 +51,7 @@ export function createApp() {
   app.route("/v1/secrets", secretRoutes);
   app.route("/v1/integrations/telegram", telegramMerchantRoutes);
   app.route("/v1/telegram", telegramWebhookRoutes);
+  app.route("/v1/webhooks", webhookRoutes);
   app.route("/v1/integrations/mcp", mcpMerchantRoutes);
   app.route("/v1/mcp", mcpGatewayRoutes);
   app.route("/v1/invocations", invocationRoutes);

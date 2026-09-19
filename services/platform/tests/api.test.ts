@@ -600,3 +600,70 @@ describe("http 402", () => {
   });
 });
 
+describe("webhooks", () => {
+  it("signs deliveries without wallets and retries from the merchant API", async () => {
+    const created = await register("hooks@example.com");
+    const session = cookie(created);
+    const projectRes = await SELF.fetch("https://obscurus.test/v1/projects", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: session },
+      body: JSON.stringify({ name: "Hooks" }),
+    });
+    const project = ((await projectRes.json()) as { project: { id: string } }).project;
+    const secret = "should-not-leak-after-create";
+    const hookRes = await SELF.fetch("https://obscurus.test/v1/webhooks", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: session },
+      body: JSON.stringify({ project_id: project.id, url: "https://example.com/hooks" }),
+    });
+    expect(hookRes.status).toBe(201);
+    const createdHook = (await hookRes.json()) as {
+      webhook: { id: string; secret: string; secret_hint: string };
+      verify: { headers: { "X-Obscurus-Signature": string } };
+    };
+    expect(createdHook.webhook.secret.startsWith("whsec_")).toBe(true);
+    expect(createdHook.verify.headers["X-Obscurus-Signature"].startsWith("sha256=")).toBe(true);
+
+    const listed = await SELF.fetch("https://obscurus.test/v1/webhooks", { headers: { cookie: session } });
+    const listedJson = await listed.json();
+    expect(JSON.stringify(listedJson)).not.toContain(createdHook.webhook.secret);
+    expect(JSON.stringify(listedJson)).not.toContain(secret);
+
+    await SELF.fetch("https://obscurus.test/v1/endpoints", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: session },
+      body: JSON.stringify({
+        project_id: project.id,
+        name: "person search",
+        method: "GET",
+        url: "https://example.com/",
+        input_schema: { fields: [] },
+        price_amount: "0.25",
+      }),
+    });
+    const endpoints = await SELF.fetch("https://obscurus.test/v1/endpoints", { headers: { cookie: session } });
+    const endpoint = ((await endpoints.json()) as { endpoints: { id: string }[] }).endpoints[0];
+    await SELF.fetch("https://obscurus.test/v1/invoke", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ endpoint_id: endpoint?.id, input: {} }),
+    });
+
+    const deliveries = await SELF.fetch(`https://obscurus.test/v1/webhooks/${createdHook.webhook.id}/deliveries`, {
+      headers: { cookie: session },
+    });
+    const deliveryJson = (await deliveries.json()) as {
+      deliveries: { id: string; event: string; status: string; payload: Record<string, unknown> }[];
+    };
+    expect(deliveryJson.deliveries.some((item) => item.event === "payment.created")).toBe(true);
+    expect(JSON.stringify(deliveryJson)).not.toMatch(/wallet|0x[a-fA-F0-9]{40}/);
+
+    const retry = await SELF.fetch(
+      `https://obscurus.test/v1/webhooks/deliveries/${deliveryJson.deliveries[0]?.id}/retry`,
+      { method: "POST", headers: { cookie: session } },
+    );
+    expect(retry.status).toBe(200);
+    expect(((await retry.json()) as { delivery: { status: string } }).delivery.status).toBe("delivered");
+  });
+});
+
