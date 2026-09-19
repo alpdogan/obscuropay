@@ -36,6 +36,9 @@ export type EndpointRow = {
   pricing_type: string;
   price_amount: string;
   price_asset: string;
+  response_mode: string;
+  response_select: string | null;
+  response_template: string | null;
   created_at: number;
   updated_at: number;
 };

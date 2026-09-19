@@ -40,3 +40,11 @@ export {
   type ParsedHeader,
   type SuggestedInput,
 } from "./curl/parse.ts";
+export {
+  parseResponseMapping,
+  renderResponseTemplate,
+  selectPath,
+  transformResponse,
+  type ResponseMapping,
+  type ResponseMode,
+} from "./endpoint/response.ts";

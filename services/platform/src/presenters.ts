@@ -22,6 +22,11 @@ export function presentEndpoint(row: EndpointRow) {
       amount: row.price_amount,
       asset: row.price_asset,
     },
+    response: {
+      mode: row.response_mode,
+      select: row.response_select,
+      template: row.response_template,
+    },
     created_at: row.created_at,
     updated_at: row.updated_at,
   };

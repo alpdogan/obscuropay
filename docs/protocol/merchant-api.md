@@ -1,6 +1,6 @@
-# Merchant API (Phase 1–2)
+# Merchant API (Phase 1–3)
 
-The merchant control plane plus a cURL importer. There is no customer checkout, Telegram, MCP, or on-chain payment yet. Payments exist as a `PaymentProvider` port and an in-memory `MockPaymentProvider` for tests.
+The merchant control plane, cURL importer, and response mapping. There is no customer checkout, Telegram, MCP, or on-chain payment yet. Payments exist as a `PaymentProvider` port and an in-memory `MockPaymentProvider` for tests.
 
 Base path: `/v1`. JSON in, JSON out. Sessions use the `obscurus_session` HTTP-only cookie.
 
@@ -29,6 +29,7 @@ Base path: `/v1`. JSON in, JSON out. Sessions use the `obscurus_session` HTTP-on
 - `GET /v1/endpoints/:id`
 - `PATCH /v1/endpoints/:id`
 - `POST /v1/endpoints/:id/test` `{ input }`
+- `POST /v1/endpoints/:id/preview-response` `{ sample, mapping? }` — applies passthrough, JSONPath-style `select`, or a text `template` to a sample merchant response.
 
 **Secrets**
 
@@ -54,11 +55,24 @@ After write, only `hint` is returned. Plaintext is never listed.
   "body_template": "{\"query\":\"{{input.query}}\"}",
   "input_schema": { "fields": [{ "name": "query", "type": "string", "required": true }] },
   "price_amount": "0.50",
-  "price_asset": "USDC"
+  "price_asset": "USDC",
+  "response": { "mode": "passthrough" }
 }
 ```
 
-`url` is static. Customer input is interpolated only in `body_template` via `{{input.field}}`. The URL is checked against the SSRF policy at write time. Test invokes resolve secrets in memory, call the merchant API, and record an invocation. They do not take a client `paid` flag and do not skip SSRF.
+`url` is static. Customer input is interpolated only in `body_template` via `{{input.field}}`. The URL is checked against the SSRF policy at write time. Test invokes resolve secrets in memory, call the merchant API, apply the stored response mapping, and record an invocation. They do not take a client `paid` flag and do not skip SSRF.
+
+## Response mapping
+
+Merchants choose how customers see a successful merchant API body. Templates cannot execute JavaScript.
+
+| Mode | Behavior |
+| ---- | -------- |
+| `passthrough` | Return the merchant body unchanged. Default. |
+| `jsonpath` | Select one JSON value with `select` (`$.data.name`, `data.items[0]`). |
+| `template` | Interpolate `{{path}}` placeholders from the JSON body. |
+
+`POST /v1/endpoints/:id/preview-response` applies a mapping to a sample (or the stored mapping if omitted) so merchants can inspect output before publishing. Test invokes persist the mapped preview, truncated to 2 KiB.
 
 ## Errors
 
@@ -82,4 +96,8 @@ pnpm --filter @obscurus/platform dev
 
 The importer is a parser, not a shell. Pipes, `$(...)`, backticks, and `-o` file writes are ignored or recorded as warnings. They are never executed.
 
-Unresolved: form-urlencoded bodies as customer inputs (JSON only today); nested JSON paths (top-level keys only).
+Unresolved: form-urlencoded bodies as customer inputs (JSON only today); nested JSON paths in the importer (top-level keys only).
+
+## Phase 3 notes
+
+Response mapping is stored on the endpoint (`response_mode`, `response_select`, `response_template`). JSONPath is a conservative subset: dotted keys and numeric indexes, optional `$.` prefix. Templates only substitute values; they do not evaluate expressions.

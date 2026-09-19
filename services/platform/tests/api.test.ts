@@ -79,6 +79,17 @@ describe("merchant API", () => {
     const patchedJson = (await patched.json()) as { endpoint: { pricing: { amount: string } } };
     expect(patchedJson.endpoint.pricing.amount).toBe("0.75");
 
+    const preview = await SELF.fetch(`https://obscurus.test/v1/endpoints/${endpoint.id}/preview-response`, {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: session },
+      body: JSON.stringify({
+        sample: { data: { name: "John", company: "Acme" } },
+        mapping: { mode: "template", template: "Name: {{data.name}}" },
+      }),
+    });
+    expect(preview.status).toBe(200);
+    expect(((await preview.json()) as { preview: string }).preview).toBe("Name: John");
+
     const invocations = await SELF.fetch("https://obscurus.test/v1/invocations", {
       headers: { cookie: session },
     });

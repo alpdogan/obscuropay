@@ -10,10 +10,12 @@ import {
   parseCurl,
   parseHeaders,
   parseInputSchema,
+  parseResponseMapping,
   renderTemplate,
   secretHint,
   secretNameFromHeader,
   slugify,
+  transformResponse,
   validateInput,
   type HeaderSpec,
 } from "@obscurus/core";
@@ -40,6 +42,7 @@ type EndpointBody = {
   input_schema?: unknown;
   price_amount?: string;
   price_asset?: string;
+  response?: unknown;
 };
 
 export const endpointRoutes = new Hono<{ Bindings: Env; Variables: { merchantId: string } }>();
@@ -164,6 +167,11 @@ endpointRoutes.patch("/:id", async (c) => {
       input_schema: body.input_schema ?? JSON.parse(existing.input_schema_json),
       price_amount: body.price_amount ?? existing.price_amount,
       price_asset: body.price_asset ?? existing.price_asset,
+      response: body.response ?? {
+        mode: existing.response_mode,
+        select: existing.response_select,
+        template: existing.response_template,
+      },
     },
     now: existing.created_at,
     updatedAt: nowSeconds(),
@@ -210,7 +218,15 @@ endpointRoutes.post("/:id/test", async (c) => {
     });
     invocation.status = result.status >= 200 && result.status < 300 ? "FULFILLED" : "FAILED";
     invocation.http_status = result.status;
-    invocation.output_preview = result.body.slice(0, 2048);
+    const mapped = transformResponse(
+      result.body,
+      parseResponseMapping({
+        mode: endpoint.response_mode,
+        select: endpoint.response_select,
+        template: endpoint.response_template,
+      }),
+    );
+    invocation.output_preview = mapped.slice(0, 2048);
     invocation.completed_at = nowSeconds();
     await updateInvocation(c.env.DB, invocation);
   } catch (error) {
@@ -222,6 +238,21 @@ endpointRoutes.post("/:id/test", async (c) => {
 
   const stored = await findInvocation(c.env.DB, c.get("merchantId"), invocation.id);
   return c.json({ invocation: presentInvocation(stored ?? invocation) }, invocation.status === "FULFILLED" ? 200 : 502);
+});
+
+endpointRoutes.post("/:id/preview-response", async (c) => {
+  const endpoint = await findEndpoint(c.env.DB, c.get("merchantId"), c.req.param("id"));
+  if (!endpoint) {
+    throw notFound("endpoint");
+  }
+  const body = await readJson<{ sample?: unknown; mapping?: unknown }>(c.req.raw);
+  const mapping = parseResponseMapping(body.mapping ?? {
+    mode: endpoint.response_mode,
+    select: endpoint.response_select,
+    template: endpoint.response_template,
+  });
+  const raw = typeof body.sample === "string" ? body.sample : JSON.stringify(body.sample ?? {});
+  return c.json({ preview: transformResponse(raw, mapping), mapping });
 });
 
 function buildEndpointRow(args: {
@@ -251,6 +282,7 @@ function buildEndpointRow(args: {
     throw badRequest("invalid_asset", "price_asset must be a short asset code");
   }
   const updated = args.updatedAt ?? args.now;
+  const response = parseResponseMapping(args.body.response);
   return {
     id: args.id,
     merchant_id: args.merchantId,
@@ -265,6 +297,9 @@ function buildEndpointRow(args: {
     pricing_type: "PER_REQUEST",
     price_amount: amount,
     price_asset: asset,
+    response_mode: response.mode,
+    response_select: response.select ?? null,
+    response_template: response.template ?? null,
     created_at: args.now,
     updated_at: updated,
   };
