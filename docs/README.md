@@ -71,5 +71,6 @@ Do not describe Obscurus as untraceable money, sanctions avoidance, tax avoidanc
 | [Webhooks](protocol/webhooks.md) | Phase 13 — HMAC + timestamp, retries, no wallet |
 | [Observability](protocol/observability.md) | Phase 14 — structured logs, request ids, health |
 | [Website privacy](../apps/website/README.md) | Phase 15 — public `/privacy` center |
+| OSS hygiene | Phase 16 — Apache-2.0, SECURITY, CONTRIBUTING, CHANGELOG |
 
 Unresolved decisions are listed at the end of [Architectural decisions](architecture/decisions.md).
