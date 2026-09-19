@@ -454,3 +454,95 @@ describe("telegram adapter", () => {
   });
 });
 
+describe("mcp adapter", () => {
+  it("lists the same endpoint as a tool and refuses silent spend", async () => {
+    const created = await register("mcp@example.com");
+    const session = cookie(created);
+    const projectRes = await SELF.fetch("https://obscurus.test/v1/projects", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: session },
+      body: JSON.stringify({ name: "MCP" }),
+    });
+    const project = ((await projectRes.json()) as { project: { id: string } }).project;
+    const endpointRes = await SELF.fetch("https://obscurus.test/v1/endpoints", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: session },
+      body: JSON.stringify({
+        project_id: project.id,
+        name: "person search",
+        method: "GET",
+        url: "https://example.com/",
+        input_schema: { fields: [{ name: "query", type: "string", required: true }] },
+        price_amount: "0.50",
+      }),
+    });
+    expect(endpointRes.status).toBe(201);
+
+    const listed = await SELF.fetch("https://obscurus.test/v1/integrations/mcp", { headers: { cookie: session } });
+    expect(listed.status).toBe(200);
+    const servers = ((await listed.json()) as { servers: { url: string }[] }).servers;
+    expect(servers[0]?.url).toContain(`/v1/mcp/${project.id}`);
+
+    const tools = await SELF.fetch(`https://obscurus.test/v1/mcp/${project.id}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list" }),
+    });
+    const toolJson = (await tools.json()) as {
+      result: { tools: { name: string; _meta: { obscurus: { silent_spend: boolean; amount: string } } }[] };
+    };
+    expect(toolJson.result.tools[0]?.name).toBe("person_search");
+    expect(toolJson.result.tools[0]?._meta.obscurus.silent_spend).toBe(false);
+    expect(JSON.stringify(toolJson)).not.toMatch(/wallet|0x[a-fA-F0-9]{40}/);
+
+    const silent = await SELF.fetch(`https://obscurus.test/v1/mcp/${project.id}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 2,
+        method: "tools/call",
+        params: { name: "person_search", arguments: { query: "John" }, paid: true },
+      }),
+    });
+    expect(silent.status).toBe(400);
+    expect(JSON.stringify(await silent.json())).toContain("silent_spend_forbidden");
+
+    const called = await SELF.fetch(`https://obscurus.test/v1/mcp/${project.id}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 3,
+        method: "tools/call",
+        params: { name: "person_search", arguments: { query: "John" } },
+      }),
+    });
+    expect(called.status).toBe(200);
+    const required = (await called.json()) as {
+      result: { isError: boolean; structuredContent: { error: string; payment: { id: string; checkout_url: string } } };
+    };
+    expect(required.result.isError).toBe(true);
+    expect(required.result.structuredContent.error).toBe("payment_required");
+    const paymentId = required.result.structuredContent.payment.id;
+
+    await SELF.fetch(`https://obscurus.test/v1/pay/${paymentId}/mock-complete`, { method: "POST" });
+    await SELF.fetch(`https://obscurus.test/v1/pay/${paymentId}/verify`, { method: "POST" });
+
+    const authorized = await SELF.fetch(`https://obscurus.test/v1/mcp/${project.id}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 4,
+        method: "tools/call",
+        params: { name: "person_search", arguments: { query: "John" }, payment_id: paymentId },
+      }),
+    });
+    expect(authorized.status).toBe(200);
+    const done = (await authorized.json()) as { result: { isError: boolean; structuredContent: { status: string } } };
+    expect(done.result.isError).toBe(false);
+    expect(done.result.structuredContent.status).toBe("FULFILLED");
+  });
+});
+

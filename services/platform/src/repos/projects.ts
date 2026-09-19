@@ -30,3 +30,10 @@ export async function findProject(
     .bind(projectId, merchantId)
     .first<ProjectRow>();
 }
+
+export async function findProjectById(db: D1Database, projectId: string): Promise<ProjectRow | null> {
+  return db
+    .prepare("SELECT id, merchant_id, name, created_at, updated_at FROM projects WHERE id = ?")
+    .bind(projectId)
+    .first<ProjectRow>();
+}

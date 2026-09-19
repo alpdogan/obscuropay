@@ -13,6 +13,7 @@ import { payRoutes } from "./routes/pay.ts";
 import { paymentRoutes } from "./routes/payments.ts";
 import { projectRoutes } from "./routes/projects.ts";
 import { secretRoutes } from "./routes/secrets.ts";
+import { mcpGatewayRoutes, mcpMerchantRoutes } from "./routes/mcp.ts";
 import { telegramMerchantRoutes, telegramWebhookRoutes } from "./routes/telegram.ts";
 
 export function createApp() {
@@ -39,6 +40,7 @@ export function createApp() {
   app.use("/v1/pay/*", cors());
   app.use("/v1/invoke", cors());
   app.use("/v1/logos/*", cors());
+  app.use("/v1/mcp/*", cors());
 
   app.route("/v1/auth", authRoutes);
   app.route("/v1/curl", curlRoutes);
@@ -47,6 +49,8 @@ export function createApp() {
   app.route("/v1/secrets", secretRoutes);
   app.route("/v1/integrations/telegram", telegramMerchantRoutes);
   app.route("/v1/telegram", telegramWebhookRoutes);
+  app.route("/v1/integrations/mcp", mcpMerchantRoutes);
+  app.route("/v1/mcp", mcpGatewayRoutes);
   app.route("/v1/invocations", invocationRoutes);
   app.route("/v1/payments", paymentRoutes);
   app.route("/v1/pay", payRoutes);

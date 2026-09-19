@@ -116,6 +116,8 @@ Spending policy (`max_per_call`, `max_per_day`, allowlists, budgets) is designed
 
 Cloudflare `McpAgent` Durable Objects are an acceptable transport. Entitlement logic stays in `packages/core`.
 
+Implementation: [mcp.md](mcp.md). `POST /v1/mcp/:projectId` is JSON-RPC over HTTP.
+
 ### HTTP 402
 
 `POST /v1/invoke/{endpoint}` without entitlement returns `402` and Obscurus-native payment details including `checkout_url`. After entitlement, `200` with `{ "result": ... }`. x402 compatibility is a later envelope ([ADR-0010](../architecture/decisions.md#adr-0010--http-402-is-obscurus-native-x402-aware)).

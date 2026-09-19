@@ -87,3 +87,12 @@ export {
   type TelegramCommand,
   type TelegramMapping,
 } from "./telegram/parse.ts";
+export {
+  assertNoSilentMcpSpend,
+  endpointToMcpTool,
+  inputSchemaToJsonSchema,
+  parseMcpSpendingPolicy,
+  type McpJsonSchema,
+  type McpSpendingPolicy,
+  type McpTool,
+} from "./mcp/tools.ts";

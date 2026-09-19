@@ -12,10 +12,11 @@ type TelegramIntegration = {
 };
 
 export default async function IntegrationsPage() {
-  const [projects, endpoints, telegram] = await Promise.all([
+  const [projects, endpoints, telegram, mcp] = await Promise.all([
     api<{ projects: Project[] }>("/v1/projects"),
     api<{ endpoints: Endpoint[] }>("/v1/endpoints"),
     api<{ integrations: TelegramIntegration[] }>("/v1/integrations/telegram"),
+    api<{ servers: { project_id: string; name: string; url: string }[] }>("/v1/integrations/mcp"),
   ]);
   return (
     <>
@@ -71,7 +72,18 @@ export default async function IntegrationsPage() {
         </div>
       ))}
       <div className="card">
-        <p>MCP — same endpoints as tools, Phase 11. No silent spend.</p>
+        <h2>MCP</h2>
+        <p className="muted">
+          The same endpoints are tools. Discovery, payment required, authorization, and execution are separate.
+          Silent spend is rejected.
+        </p>
+        {mcp.servers.map((server) => (
+          <p key={server.project_id}>
+            {server.name}: <code>{server.url}</code>
+          </p>
+        ))}
+      </div>
+      <div className="card">
         <p>HTTP 402 — Obscurus-native payment_required, Phase 12.</p>
       </div>
     </>

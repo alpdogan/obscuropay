@@ -51,6 +51,25 @@ export async function listEndpoints(db: D1Database, merchantId: string): Promise
   return result.results;
 }
 
+export async function listEndpointsByProject(db: D1Database, projectId: string): Promise<EndpointRow[]> {
+  const result = await db
+    .prepare("SELECT * FROM endpoints WHERE project_id = ? ORDER BY created_at DESC LIMIT 50")
+    .bind(projectId)
+    .all<EndpointRow>();
+  return result.results;
+}
+
+export async function findEndpointBySlug(
+  db: D1Database,
+  projectId: string,
+  slug: string,
+): Promise<EndpointRow | null> {
+  return db
+    .prepare("SELECT * FROM endpoints WHERE project_id = ? AND slug = ?")
+    .bind(projectId, slug)
+    .first<EndpointRow>();
+}
+
 export async function updateEndpoint(db: D1Database, row: EndpointRow): Promise<void> {
   await db
     .prepare(
