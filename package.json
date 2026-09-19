@@ -1,0 +1,14 @@
+{
+  "name": "obscurus",
+  "private": true,
+  "packageManager": "pnpm@12.3.4",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @obscurus/platform dev",
+    "test": "pnpm --filter @obscurus/core test && pnpm --filter @obscurus/platform test",
+    "typecheck": "pnpm --filter @obscurus/core typecheck && pnpm --filter @obscurus/platform typecheck",
+    "lint": "pnpm typecheck"
+  }
+}

@@ -1,0 +1,3 @@
+# 32-byte key, base64. Generate a unique key for every environment.
+# openssl rand -base64 32
+SECRET_KEK=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=

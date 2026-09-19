@@ -1,0 +1,37 @@
+import { DomainError } from "@obscurus/core";
+import { Hono } from "hono";
+import { isProduction } from "./runtime.ts";
+import { authRoutes } from "./routes/auth.ts";
+import { endpointRoutes } from "./routes/endpoints.ts";
+import { invocationRoutes } from "./routes/invocations.ts";
+import { projectRoutes } from "./routes/projects.ts";
+import { secretRoutes } from "./routes/secrets.ts";
+
+export function createApp() {
+  const app = new Hono<{ Bindings: Env; Variables: { merchantId: string } }>();
+
+  app.onError((err, c) => {
+    if (err instanceof DomainError) {
+      return c.json(
+        { error: { code: err.code, message: err.message } },
+        err.status as 400 | 401 | 403 | 404 | 409,
+      );
+    }
+    console.error(
+      JSON.stringify({
+        level: "error",
+        error_class: err.name,
+        ...(isProduction(c.env) ? {} : { message: err.message }),
+      }),
+    );
+    const message = isProduction(c.env) ? "Internal error" : err.message;
+    return c.json({ error: { code: "internal", message } }, 500);
+  });
+
+  app.route("/v1/auth", authRoutes);
+  app.route("/v1/projects", projectRoutes);
+  app.route("/v1/endpoints", endpointRoutes);
+  app.route("/v1/secrets", secretRoutes);
+  app.route("/v1/invocations", invocationRoutes);
+  return app;
+}

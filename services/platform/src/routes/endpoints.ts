@@ -1,0 +1,214 @@
+import {
+  AesGcmSecretBox,
+  assertHttpMethod,
+  assertPriceAmount,
+  badRequest,
+  inspectUrl,
+  newId,
+  notFound,
+  parseHeaders,
+  parseInputSchema,
+  renderTemplate,
+  slugify,
+  validateInput,
+  type HeaderSpec,
+} from "@obscurus/core";
+import { Hono } from "hono";
+import { requireMerchant } from "../auth.ts";
+import { nowSeconds } from "../clock.ts";
+import { ExecutorError, executeMerchantRequest } from "../executor.ts";
+import { readJson } from "../http/json.ts";
+import { presentEndpoint, presentInvocation } from "../presenters.ts";
+import { findEndpoint, insertEndpoint, updateEndpoint } from "../repos/endpoints.ts";
+import { findInvocation, insertInvocation, updateInvocation } from "../repos/invocations.ts";
+import { findProject } from "../repos/projects.ts";
+import { findSecret } from "../repos/secrets.ts";
+import type { EndpointRow, InvocationRow } from "../repos/types.ts";
+import { isProduction } from "../runtime.ts";
+
+type EndpointBody = {
+  project_id?: string;
+  name?: string;
+  method?: string;
+  url?: string;
+  headers?: unknown;
+  body_template?: string | null;
+  input_schema?: unknown;
+  price_amount?: string;
+  price_asset?: string;
+};
+
+export const endpointRoutes = new Hono<{ Bindings: Env; Variables: { merchantId: string } }>();
+
+endpointRoutes.use("*", requireMerchant);
+
+endpointRoutes.post("/", async (c) => {
+  const body = await readJson<EndpointBody>(c.req.raw);
+  const project = await findProject(c.env.DB, c.get("merchantId"), body.project_id ?? "");
+  if (!project) {
+    throw notFound("project");
+  }
+  const row = buildEndpointRow({
+    id: newId("endpoint"),
+    merchantId: c.get("merchantId"),
+    projectId: project.id,
+    body,
+    now: nowSeconds(),
+    allowHttp: !isProduction(c.env),
+  });
+  await insertEndpoint(c.env.DB, row);
+  return c.json({ endpoint: presentEndpoint(row) }, 201);
+});
+
+endpointRoutes.get("/:id", async (c) => {
+  const row = await findEndpoint(c.env.DB, c.get("merchantId"), c.req.param("id"));
+  if (!row) {
+    throw notFound("endpoint");
+  }
+  return c.json({ endpoint: presentEndpoint(row) });
+});
+
+endpointRoutes.patch("/:id", async (c) => {
+  const existing = await findEndpoint(c.env.DB, c.get("merchantId"), c.req.param("id"));
+  if (!existing) {
+    throw notFound("endpoint");
+  }
+  const body = await readJson<EndpointBody>(c.req.raw);
+  const row = buildEndpointRow({
+    id: existing.id,
+    merchantId: existing.merchant_id,
+    projectId: existing.project_id,
+    body: {
+      name: body.name ?? existing.name,
+      method: body.method ?? existing.method,
+      url: body.url ?? existing.url,
+      headers: body.headers ?? JSON.parse(existing.headers_json),
+      body_template: body.body_template === undefined ? existing.body_template : body.body_template,
+      input_schema: body.input_schema ?? JSON.parse(existing.input_schema_json),
+      price_amount: body.price_amount ?? existing.price_amount,
+      price_asset: body.price_asset ?? existing.price_asset,
+    },
+    now: existing.created_at,
+    updatedAt: nowSeconds(),
+    allowHttp: !isProduction(c.env),
+  });
+  await updateEndpoint(c.env.DB, row);
+  return c.json({ endpoint: presentEndpoint(row) });
+});
+
+endpointRoutes.post("/:id/test", async (c) => {
+  const endpoint = await findEndpoint(c.env.DB, c.get("merchantId"), c.req.param("id"));
+  if (!endpoint) {
+    throw notFound("endpoint");
+  }
+  const body = await readJson<{ input?: Record<string, unknown> }>(c.req.raw);
+  const schema = parseInputSchema(JSON.parse(endpoint.input_schema_json));
+  const input = validateInput(schema, body.input ?? {});
+  const now = nowSeconds();
+  const invocation: InvocationRow = {
+    id: newId("invocation"),
+    merchant_id: endpoint.merchant_id,
+    project_id: endpoint.project_id,
+    endpoint_id: endpoint.id,
+    source: "merchant_test",
+    status: "FULFILLING",
+    input_json: JSON.stringify(input),
+    output_preview: null,
+    error_class: null,
+    http_status: null,
+    created_at: now,
+    completed_at: null,
+  };
+  await insertInvocation(c.env.DB, invocation);
+
+  try {
+    const headers = await resolveHeaders(c, JSON.parse(endpoint.headers_json) as HeaderSpec[]);
+    const renderedBody = endpoint.body_template ? renderTemplate(endpoint.body_template, input) : null;
+    const result = await executeMerchantRequest({
+      method: endpoint.method,
+      url: endpoint.url,
+      headers,
+      body: renderedBody,
+      allowHttp: !isProduction(c.env),
+    });
+    invocation.status = result.status >= 200 && result.status < 300 ? "FULFILLED" : "FAILED";
+    invocation.http_status = result.status;
+    invocation.output_preview = result.body.slice(0, 2048);
+    invocation.completed_at = nowSeconds();
+    await updateInvocation(c.env.DB, invocation);
+  } catch (error) {
+    invocation.status = "FAILED";
+    invocation.error_class = error instanceof ExecutorError ? error.reason : "executor_error";
+    invocation.completed_at = nowSeconds();
+    await updateInvocation(c.env.DB, invocation);
+  }
+
+  const stored = await findInvocation(c.env.DB, c.get("merchantId"), invocation.id);
+  return c.json({ invocation: presentInvocation(stored ?? invocation) }, invocation.status === "FULFILLED" ? 200 : 502);
+});
+
+function buildEndpointRow(args: {
+  id: string;
+  merchantId: string;
+  projectId: string;
+  body: EndpointBody;
+  now: number;
+  updatedAt?: number;
+  allowHttp: boolean;
+}): EndpointRow {
+  const name = args.body.name?.trim() ?? "";
+  if (name.length < 1 || name.length > 80) {
+    throw badRequest("invalid_name", "Endpoint name must be between 1 and 80 characters");
+  }
+  const method = assertHttpMethod(args.body.method ?? "");
+  const url = args.body.url?.trim() ?? "";
+  const inspected = inspectUrl(url, { allowHttp: args.allowHttp });
+  if (!inspected.ok) {
+    throw badRequest("invalid_url", `URL rejected: ${inspected.reason}`);
+  }
+  const schema = parseInputSchema(args.body.input_schema ?? { fields: [] });
+  const headers = parseHeaders(args.body.headers);
+  const amount = assertPriceAmount(args.body.price_amount ?? "0.00");
+  const asset = (args.body.price_asset ?? "USDC").toUpperCase();
+  if (!/^[A-Z]{3,8}$/.test(asset)) {
+    throw badRequest("invalid_asset", "price_asset must be a short asset code");
+  }
+  const updated = args.updatedAt ?? args.now;
+  return {
+    id: args.id,
+    merchant_id: args.merchantId,
+    project_id: args.projectId,
+    name,
+    slug: slugify(name),
+    method,
+    url: inspected.url.toString(),
+    headers_json: JSON.stringify(headers),
+    body_template: args.body.body_template ?? null,
+    input_schema_json: JSON.stringify(schema),
+    pricing_type: "PER_REQUEST",
+    price_amount: amount,
+    price_asset: asset,
+    created_at: args.now,
+    updated_at: updated,
+  };
+}
+
+async function resolveHeaders(
+  c: { env: Env; get: (key: "merchantId") => string },
+  specs: HeaderSpec[],
+): Promise<Record<string, string>> {
+  const box = AesGcmSecretBox.fromBase64(c.env.SECRET_KEK);
+  const headers: Record<string, string> = {};
+  for (const spec of specs) {
+    if ("secretId" in spec) {
+      const secret = await findSecret(c.env.DB, c.get("merchantId"), spec.secretId);
+      if (!secret) {
+        throw notFound("secret");
+      }
+      headers[spec.name] = await box.decrypt(secret.ciphertext);
+    } else {
+      headers[spec.name] = spec.value;
+    }
+  }
+  return headers;
+}
