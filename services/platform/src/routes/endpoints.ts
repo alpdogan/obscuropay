@@ -24,7 +24,7 @@ import { nowSeconds } from "../clock.ts";
 import { executeStoredEndpoint } from "../execute-endpoint.ts";
 import { readJson } from "../http/json.ts";
 import { presentEndpoint, presentInvocation } from "../presenters.ts";
-import { findEndpoint, insertEndpoint, updateEndpoint } from "../repos/endpoints.ts";
+import { findEndpoint, insertEndpoint, listEndpoints, updateEndpoint } from "../repos/endpoints.ts";
 import { findInvocation, insertInvocation, updateInvocation } from "../repos/invocations.ts";
 import { findProject } from "../repos/projects.ts";
 import { findSecret, insertSecret } from "../repos/secrets.ts";
@@ -137,6 +137,11 @@ endpointRoutes.post("/", async (c) => {
   });
   await insertEndpoint(c.env.DB, row);
   return c.json({ endpoint: presentEndpoint(row) }, 201);
+});
+
+endpointRoutes.get("/", async (c) => {
+  const rows = await listEndpoints(c.env.DB, c.get("merchantId"));
+  return c.json({ endpoints: rows.map(presentEndpoint) });
 });
 
 endpointRoutes.get("/:id", async (c) => {

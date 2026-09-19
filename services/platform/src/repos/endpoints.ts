@@ -43,6 +43,14 @@ export async function findEndpointById(db: D1Database, endpointId: string): Prom
   return db.prepare("SELECT * FROM endpoints WHERE id = ?").bind(endpointId).first<EndpointRow>();
 }
 
+export async function listEndpoints(db: D1Database, merchantId: string): Promise<EndpointRow[]> {
+  const result = await db
+    .prepare("SELECT * FROM endpoints WHERE merchant_id = ? ORDER BY created_at DESC LIMIT 50")
+    .bind(merchantId)
+    .all<EndpointRow>();
+  return result.results;
+}
+
 export async function updateEndpoint(db: D1Database, row: EndpointRow): Promise<void> {
   await db
     .prepare(

@@ -69,6 +69,9 @@ describe("merchant API", () => {
       headers: { cookie: session },
     });
     expect(getOne.status).toBe(200);
+    const listed = await SELF.fetch("https://obscurus.test/v1/endpoints", { headers: { cookie: session } });
+    expect(listed.status).toBe(200);
+    expect(((await listed.json()) as { endpoints: { id: string }[] }).endpoints[0]?.id).toBe(endpoint.id);
 
     const patched = await SELF.fetch(`https://obscurus.test/v1/endpoints/${endpoint.id}`, {
       method: "PATCH",

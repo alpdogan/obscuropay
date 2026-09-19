@@ -64,5 +64,6 @@ Do not describe Obscurus as untraceable money, sanctions avoidance, tax avoidanc
 | [Merchant API](protocol/merchant-api.md) | Phase 1–4 — auth, cURL, response mapping, payments |
 | [ObscurusPay](../contracts/README.md) | Phase 5 — Base Sepolia USDC contract, not deployed |
 | [Checkout](../apps/checkout/README.md) | Phase 6–8 — checkout, privacy inspector, merchant branding |
+| [Dashboard](../apps/dashboard/README.md) | Phase 9 — merchant console, no customer wallets |
 
 Unresolved decisions are listed at the end of [Architectural decisions](architecture/decisions.md).

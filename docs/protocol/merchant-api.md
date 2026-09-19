@@ -1,6 +1,6 @@
-# Merchant API (Phase 1–6)
+# Merchant API (Phase 1–9)
 
-The merchant control plane, cURL importer, response mapping, payment/entitlement state machine, and checkout APIs. Telegram, MCP, and a live chain adapter are later. The production payment provider is still `mock` (D1-backed) until `ObscurusPay` is deployed on Base Sepolia. `MockPaymentProvider` remains the in-memory unit-test double.
+The merchant control plane, cURL importer, response mapping, payment/entitlement state machine, checkout APIs, and the Next.js merchant dashboard. Telegram, MCP, and a live chain adapter are later. The production payment provider is still `mock` (D1-backed) until `ObscurusPay` is deployed on Base Sepolia. `MockPaymentProvider` remains the in-memory unit-test double.
 
 Base path: `/v1`. JSON in, JSON out. Sessions use the `obscurus_session` HTTP-only cookie.
 
@@ -27,6 +27,7 @@ Base path: `/v1`. JSON in, JSON out. Sessions use the `obscurus_session` HTTP-on
 **Endpoints**
 
 - `POST /v1/endpoints`
+- `GET /v1/endpoints`
 - `GET /v1/endpoints/:id`
 - `PATCH /v1/endpoints/:id`
 - `POST /v1/endpoints/:id/test` `{ input }`
