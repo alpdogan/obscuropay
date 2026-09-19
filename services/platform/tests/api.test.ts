@@ -353,3 +353,104 @@ describe("payment state machine", () => {
     expect(stolen.status).toBe(404);
   });
 });
+
+describe("telegram adapter", () => {
+  it("stores a bot token as a hint, charges, then resumes the same invocation", async () => {
+    const created = await register("telegram@example.com");
+    const session = cookie(created);
+    const projectRes = await SELF.fetch("https://obscurus.test/v1/projects", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: session },
+      body: JSON.stringify({ name: "Telegram" }),
+    });
+    const project = ((await projectRes.json()) as { project: { id: string } }).project;
+    const endpointRes = await SELF.fetch("https://obscurus.test/v1/endpoints", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: session },
+      body: JSON.stringify({
+        project_id: project.id,
+        name: "person search",
+        method: "GET",
+        url: "https://example.com/",
+        input_schema: { fields: [{ name: "query", type: "string", required: true }] },
+        price_amount: "0.50",
+      }),
+    });
+    const endpoint = ((await endpointRes.json()) as { endpoint: { id: string } }).endpoint;
+    const token = "123456:AAHsecretTOKENVALUE";
+
+    const connected = await SELF.fetch("https://obscurus.test/v1/integrations/telegram", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: session },
+      body: JSON.stringify({
+        project_id: project.id,
+        endpoint_id: endpoint.id,
+        mapping: "/search {{query}}",
+        bot_token: token,
+      }),
+    });
+    expect(connected.status).toBe(201);
+    const integration = (
+      (await connected.json()) as {
+        integration: { id: string; token_hint: string; webhook_secret: string; command: string };
+      }
+    ).integration;
+    expect(integration.command).toBe("/search");
+    expect(integration.token_hint).toBe("••••ALUE");
+    expect(JSON.stringify(integration)).not.toContain(token);
+
+    const listed = await SELF.fetch("https://obscurus.test/v1/integrations/telegram", {
+      headers: { cookie: session },
+    });
+    const listedJson = await listed.json();
+    expect(JSON.stringify(listedJson)).not.toContain(token);
+    expect(JSON.stringify(listedJson)).not.toContain("webhook_secret");
+
+    const denied = await SELF.fetch(`https://obscurus.test/v1/telegram/webhook/${integration.id}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ message: { chat: { id: 99 }, text: "/search John Smith" } }),
+    });
+    expect(denied.status).toBe(401);
+
+    const webhook = await SELF.fetch(`https://obscurus.test/v1/telegram/webhook/${integration.id}`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "X-Telegram-Bot-Api-Secret-Token": integration.webhook_secret,
+      },
+      body: JSON.stringify({ message: { chat: { id: 4242 }, text: "/search John Smith" } }),
+    });
+    expect(webhook.status).toBe(200);
+    const started = (await webhook.json()) as {
+      obscurus: { invocation_id: string; checkout_url: string; replied: string };
+    };
+    expect(started.obscurus.replied).toBe("payment_required");
+    expect(started.obscurus.checkout_url).toMatch(/^\/pay\//);
+    const paymentId = started.obscurus.checkout_url.slice("/pay/".length);
+
+    const invocations = await SELF.fetch("https://obscurus.test/v1/invocations", { headers: { cookie: session } });
+    const invocationJson = (await invocations.json()) as {
+      invocations: { id: string; source: string; input: { query: string }; status: string }[];
+    };
+    expect(invocationJson.invocations[0]?.id).toBe(started.obscurus.invocation_id);
+    expect(invocationJson.invocations[0]?.source).toBe("telegram");
+    expect(invocationJson.invocations[0]?.input).toEqual({ query: "John Smith" });
+    expect(JSON.stringify(invocationJson)).not.toContain("4242");
+    expect(JSON.stringify(invocationJson)).not.toContain(token);
+
+    await SELF.fetch(`https://obscurus.test/v1/pay/${paymentId}/mock-complete`, { method: "POST" });
+    await SELF.fetch(`https://obscurus.test/v1/pay/${paymentId}/verify`, { method: "POST" });
+    const fulfilled = await SELF.fetch(`https://obscurus.test/v1/pay/${paymentId}/fulfill`, { method: "POST" });
+    expect(fulfilled.status).toBe(200);
+    const done = (await fulfilled.json()) as {
+      telegram: { delivered: boolean };
+      invocation: { id: string; status: string };
+    };
+    expect(done.invocation.id).toBe(started.obscurus.invocation_id);
+    expect(done.invocation.status).toBe("FULFILLED");
+    expect(done.telegram.delivered).toBe(true);
+    expect(JSON.stringify(done)).not.toContain("4242");
+  });
+});
+

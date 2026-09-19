@@ -7,6 +7,7 @@ import { findMerchantById } from "../repos/merchants.ts";
 import { findPaymentById } from "../repos/payments.ts";
 import type { PaymentRow } from "../repos/types.ts";
 import { isProduction } from "../runtime.ts";
+import { deliverTelegramIfNeeded } from "../telegram/deliver.ts";
 
 export const payRoutes = new Hono<{ Bindings: Env }>();
 
@@ -59,10 +60,12 @@ payRoutes.post("/:id/fulfill", async (c) => {
     throw notFound("payment");
   }
   const fulfilled = await fulfillStoredPayment(c.env, payment);
+  const telegram = await deliverTelegramIfNeeded(c.env, fulfilled.invocation);
   return c.json(
     {
       payment: presentPayment(fulfilled.payment),
       invocation: presentInvocation(fulfilled.invocation),
+      ...(telegram ? { telegram } : {}),
     },
     fulfilled.invocation.status === "FULFILLED" ? 200 : 502,
   );

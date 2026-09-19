@@ -9,7 +9,8 @@
     "head_sampling_rate": 1
   },
   "vars": {
-    "ENVIRONMENT": "development"
+    "ENVIRONMENT": "development",
+    "CHECKOUT_ORIGIN": "http://localhost:3000"
   },
   "d1_databases": [
     {

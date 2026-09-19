@@ -38,3 +38,13 @@ export async function findSecret(db: D1Database, merchantId: string, secretId: s
     .bind(secretId, merchantId)
     .first<SecretRow>();
 }
+
+export async function updateSecretCipher(
+  db: D1Database,
+  row: { id: string; merchantId: string; ciphertext: string; hint: string },
+): Promise<void> {
+  await db
+    .prepare("UPDATE secrets SET ciphertext = ?, hint = ? WHERE id = ? AND merchant_id = ?")
+    .bind(row.ciphertext, row.hint, row.id, row.merchantId)
+    .run();
+}

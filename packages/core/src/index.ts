@@ -78,3 +78,12 @@ export {
   type ResponseMapping,
   type ResponseMode,
 } from "./endpoint/response.ts";
+export {
+  formatTelegramCommand,
+  mapTelegramArgument,
+  normalizeTelegramCommand,
+  parseTelegramMapping,
+  parseTelegramText,
+  type TelegramCommand,
+  type TelegramMapping,
+} from "./telegram/parse.ts";

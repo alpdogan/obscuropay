@@ -14,6 +14,8 @@ export default defineWorkersConfig(async () => {
             bindings: {
               SECRET_KEK: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
               ENVIRONMENT: "development",
+              CHECKOUT_ORIGIN: "https://pay.obscurus.test",
+              TELEGRAM_STUB: "1",
               TEST_MIGRATIONS: migrations,
             },
           },

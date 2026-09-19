@@ -7,6 +7,7 @@ const prefixes = {
   payment: "pay",
   entitlement: "ent",
   session: "sess",
+  telegram: "tgint",
 } as const;
 
 export type IdKind = keyof typeof prefixes;

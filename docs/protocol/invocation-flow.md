@@ -106,6 +106,8 @@ Merchant stores a bot token once. Command maps to an endpoint. User: `/search Jo
 
 Telegram is an adapter. Production launch still requires a review of Telegram’s paid digital goods rules. Architecture must not depend only on Telegram.
 
+Implementation: [telegram.md](telegram.md).
+
 ### MCP
 
 The same endpoint is a tool: `person_search(query: string)` plus description and price metadata. Discovery, payment requirement, authorization, and execution are separate steps. Merchant tools must not contain chain details.

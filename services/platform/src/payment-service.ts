@@ -68,6 +68,7 @@ export async function startPaidInvocation(
   env: Env,
   endpointId: string,
   rawInput: Record<string, unknown>,
+  source = "http",
 ): Promise<{ endpoint: EndpointRow; invocation: InvocationRow; payment: PaymentRow }> {
   const endpoint = await findEndpointById(env.DB, endpointId);
   if (!endpoint) {
@@ -81,7 +82,7 @@ export async function startPaidInvocation(
     merchant_id: endpoint.merchant_id,
     project_id: endpoint.project_id,
     endpoint_id: endpoint.id,
-    source: "http",
+    source,
     status: "AWAITING_PAYMENT",
     input_json: JSON.stringify(input),
     output_preview: null,

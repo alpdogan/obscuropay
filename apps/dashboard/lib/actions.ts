@@ -65,6 +65,20 @@ export async function saveSettlementAction(formData: FormData) {
   redirect("/settings");
 }
 
+export async function connectTelegramAction(formData: FormData) {
+  await api("/v1/integrations/telegram", {
+    method: "POST",
+    body: JSON.stringify({
+      project_id: String(formData.get("project_id") ?? ""),
+      endpoint_id: String(formData.get("endpoint_id") ?? ""),
+      command: String(formData.get("command") ?? ""),
+      input_field: String(formData.get("input_field") ?? "") || undefined,
+      bot_token: String(formData.get("bot_token") ?? ""),
+    }),
+  });
+  redirect("/integrations");
+}
+
 export async function saveBrandingAction(formData: FormData) {
   await api("/v1/branding", {
     method: "PATCH",

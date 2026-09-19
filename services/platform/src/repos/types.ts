@@ -89,3 +89,25 @@ export type EntitlementRow = {
   claimed_at: number | null;
   created_at: number;
 };
+
+export type TelegramIntegrationRow = {
+  id: string;
+  merchant_id: string;
+  project_id: string;
+  endpoint_id: string;
+  command: string;
+  input_field: string | null;
+  secret_id: string;
+  webhook_secret: string;
+  created_at: number;
+  updated_at: number;
+};
+
+export type TelegramSessionRow = {
+  invocation_id: string;
+  merchant_id: string;
+  integration_id: string;
+  chat_id: string;
+  delivered_at: number | null;
+  created_at: number;
+};

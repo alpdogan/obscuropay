@@ -2,6 +2,9 @@
 interface Env {
   SECRET_KEK: string;
   ENVIRONMENT: string;
+  CHECKOUT_ORIGIN?: string;
+  PLATFORM_PUBLIC_ORIGIN?: string;
+  TELEGRAM_STUB?: string;
   TEST_MIGRATIONS?: { name: string; queries: string[] }[];
 }
 

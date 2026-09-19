@@ -1,6 +1,6 @@
-# Merchant API (Phase 1–9)
+# Merchant API (Phase 1–10)
 
-The merchant control plane, cURL importer, response mapping, payment/entitlement state machine, checkout APIs, and the Next.js merchant dashboard. Telegram, MCP, and a live chain adapter are later. The production payment provider is still `mock` (D1-backed) until `ObscurusPay` is deployed on Base Sepolia. `MockPaymentProvider` remains the in-memory unit-test double.
+The merchant control plane, cURL importer, response mapping, payment/entitlement state machine, checkout APIs, the Next.js merchant dashboard, and the Telegram adapter. MCP and a live chain adapter are later. The production payment provider is still `mock` (D1-backed) until `ObscurusPay` is deployed on Base Sepolia. `MockPaymentProvider` remains the in-memory unit-test double.
 
 Base path: `/v1`. JSON in, JSON out. Sessions use the `obscurus_session` HTTP-only cookie.
 
@@ -60,6 +60,14 @@ Merchant payment JSON is `id`, `endpoint_id`, `invocation_id`, `amount`, `asset`
 - `GET /v1/logos/:merchant_id` — public image.
 
 There is no field to hide Obscurus disclosures. `disclosures_required` is always `true`.
+
+**Telegram**
+
+- `POST /v1/integrations/telegram` `{ project_id, endpoint_id, command?, input_field?, mapping?, bot_token }` — stores the bot token as a secret. Only `token_hint` is shown later. `webhook_secret` is returned on this write so the merchant can confirm `setWebhook`.
+- `GET /v1/integrations/telegram` — command, hint, webhook URL. Never the token.
+- `POST /v1/telegram/webhook/:id` — Telegram update receiver. Creates the invocation, sends checkout, and after fulfill replies in the same chat.
+
+See [Telegram adapter](telegram.md).
 
 **Paid invoke (no customer account)**
 
