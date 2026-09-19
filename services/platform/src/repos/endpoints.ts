@@ -70,6 +70,11 @@ export async function findEndpointBySlug(
     .first<EndpointRow>();
 }
 
+export async function findEndpointsBySlug(db: D1Database, slug: string): Promise<EndpointRow[]> {
+  const result = await db.prepare("SELECT * FROM endpoints WHERE slug = ?").bind(slug).all<EndpointRow>();
+  return result.results;
+}
+
 export async function updateEndpoint(db: D1Database, row: EndpointRow): Promise<void> {
   await db
     .prepare(

@@ -84,7 +84,11 @@ export default async function IntegrationsPage() {
         ))}
       </div>
       <div className="card">
-        <p>HTTP 402 — Obscurus-native payment_required, Phase 12.</p>
+        <h2>HTTP 402</h2>
+        <p className="muted">
+          <code>POST /v1/invoke/{"{slug}"}</code> returns Obscurus-native <code>payment_required</code> until a
+          payment is authorized. x402 envelopes are later.
+        </p>
       </div>
     </>
   );

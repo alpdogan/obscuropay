@@ -1,6 +1,6 @@
-# Merchant API (Phase 1–11)
+# Merchant API (Phase 1–12)
 
-The merchant control plane, cURL importer, response mapping, payment/entitlement state machine, checkout APIs, the Next.js merchant dashboard, Telegram, and MCP. HTTP 402 and a live chain adapter are later. The production payment provider is still `mock` (D1-backed) until `ObscurusPay` is deployed on Base Sepolia. `MockPaymentProvider` remains the in-memory unit-test double.
+The merchant control plane, cURL importer, response mapping, payment/entitlement state machine, checkout APIs, the Next.js merchant dashboard, Telegram, MCP, and HTTP 402. A live chain adapter is later. The production payment provider is still `mock` (D1-backed) until `ObscurusPay` is deployed on Base Sepolia. `MockPaymentProvider` remains the in-memory unit-test double.
 
 Base path: `/v1`. JSON in, JSON out. Sessions use the `obscurus_session` HTTP-only cookie.
 
@@ -78,7 +78,8 @@ See [MCP adapter](mcp.md).
 
 **Paid invoke (no customer account)**
 
-- `POST /v1/invoke` `{ endpoint_id, input }` — creates an invocation and a `CREATED` → `AWAITING_PAYMENT` charge. `PER_REQUEST` only.
+- `POST /v1/invoke` `{ endpoint_id, input }` — creates an invocation and a `CREATED` → `AWAITING_PAYMENT` charge. `PER_REQUEST` only. Returns `201` for existing clients.
+- `POST /v1/invoke/:slug` `{ query…, payment_id? }` — Obscurus-native **HTTP 402** `payment_required` until a `payment_id` is authorized, then `200 { result }`. See [HTTP 402](http-402.md).
 - `GET /v1/pay/:id` — public checkout payload: amount, asset, state, `payment_ref`, `service_name`, merchant `settlement_address`. Never a customer wallet.
 - `POST /v1/pay/:id/verify` — idempotent. Issues a single-use entitlement when the payment becomes `PAID`.
 - `POST /v1/pay/:id/fulfill` — claims the entitlement and runs the merchant API at most once.

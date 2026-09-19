@@ -122,6 +122,8 @@ Implementation: [mcp.md](mcp.md). `POST /v1/mcp/:projectId` is JSON-RPC over HTT
 
 `POST /v1/invoke/{endpoint}` without entitlement returns `402` and Obscurus-native payment details including `checkout_url`. After entitlement, `200` with `{ "result": ... }`. x402 compatibility is a later envelope ([ADR-0010](../architecture/decisions.md#adr-0010--http-402-is-obscurus-native-x402-aware)).
 
+Implementation: [http-402.md](http-402.md).
+
 ## Invariants
 
 1. No merchant API call without a claimed entitlement.

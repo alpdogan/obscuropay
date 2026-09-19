@@ -546,3 +546,57 @@ describe("mcp adapter", () => {
   });
 });
 
+describe("http 402", () => {
+  it("returns Obscurus-native payment_required then the result after pay", async () => {
+    const created = await register("http402@example.com");
+    const session = cookie(created);
+    const projectRes = await SELF.fetch("https://obscurus.test/v1/projects", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: session },
+      body: JSON.stringify({ name: "HTTP" }),
+    });
+    const project = ((await projectRes.json()) as { project: { id: string } }).project;
+    const endpointRes = await SELF.fetch("https://obscurus.test/v1/endpoints", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: session },
+      body: JSON.stringify({
+        project_id: project.id,
+        name: "person search",
+        method: "GET",
+        url: "https://example.com/",
+        input_schema: { fields: [{ name: "query", type: "string", required: true }] },
+        price_amount: "0.50",
+      }),
+    });
+    expect(endpointRes.status).toBe(201);
+
+    const first = await SELF.fetch("https://obscurus.test/v1/invoke/person_search", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ query: "John" }),
+    });
+    expect(first.status).toBe(402);
+    const required = (await first.json()) as {
+      error: string;
+      payment: { id: string; amount: string; asset: string; checkout_url: string };
+    };
+    expect(required.error).toBe("payment_required");
+    expect(required.payment.amount).toBe("0.50");
+    expect(required.payment.asset).toBe("USDC");
+    expect(required.payment.checkout_url).toBe(`/pay/${required.payment.id}`);
+    expect(JSON.stringify(required)).not.toMatch(/wallet|PAYMENT-SIGNATURE|0x[a-fA-F0-9]{40}/);
+
+    await SELF.fetch(`https://obscurus.test/v1/pay/${required.payment.id}/mock-complete`, { method: "POST" });
+    await SELF.fetch(`https://obscurus.test/v1/pay/${required.payment.id}/verify`, { method: "POST" });
+
+    const second = await SELF.fetch("https://obscurus.test/v1/invoke/person_search", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ query: "John", payment_id: required.payment.id }),
+    });
+    expect(second.status).toBe(200);
+    const paid = (await second.json()) as { result: unknown };
+    expect(paid).toHaveProperty("result");
+  });
+});
+

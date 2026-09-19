@@ -1,4 +1,4 @@
-export { DomainError, badRequest, conflict, forbidden, notFound, unauthorized } from "./errors.ts";
+export { DomainError, badRequest, conflict, forbidden, notFound, paymentRequired, unauthorized } from "./errors.ts";
 export { newId, newPaymentRef, type IdKind } from "./ids.ts";
 export { assertEmail, assertPassword, hashPassword, normalizeEmail, verifyPassword } from "./auth/password.ts";
 export { PAYMENT_STATES, assertTransition, canTransition, type PaymentState } from "./payment/states.ts";
@@ -87,6 +87,7 @@ export {
   type TelegramCommand,
   type TelegramMapping,
 } from "./telegram/parse.ts";
+export { parseInvokeResult, paymentRequiredBody, type PaymentRequiredBody } from "./http/payment-required.ts";
 export {
   assertNoSilentMcpSpend,
   endpointToMcpTool,

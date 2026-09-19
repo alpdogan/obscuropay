@@ -23,7 +23,7 @@ export function createApp() {
     if (err instanceof DomainError) {
       return c.json(
         { error: { code: err.code, message: err.message } },
-        err.status as 400 | 401 | 403 | 404 | 409,
+        err.status as 400 | 401 | 402 | 403 | 404 | 409,
       );
     }
     console.error(
@@ -39,6 +39,7 @@ export function createApp() {
 
   app.use("/v1/pay/*", cors());
   app.use("/v1/invoke", cors());
+  app.use("/v1/invoke/*", cors());
   app.use("/v1/logos/*", cors());
   app.use("/v1/mcp/*", cors());
 

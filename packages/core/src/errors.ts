@@ -29,3 +29,7 @@ export function notFound(entity: string): DomainError {
 export function conflict(code: string, message: string): DomainError {
   return new DomainError(code, message, 409);
 }
+
+export function paymentRequired(message = "Payment required"): DomainError {
+  return new DomainError("payment_required", message, 402);
+}
