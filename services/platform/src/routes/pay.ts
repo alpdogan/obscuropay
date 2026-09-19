@@ -1,18 +1,30 @@
 import { forbidden, notFound } from "@obscurus/core";
 import { Hono } from "hono";
 import { fulfillStoredPayment, markMockComplete, verifyStoredPayment } from "../payment-service.ts";
-import { presentInvocation, presentPayment } from "../presenters.ts";
+import { presentCheckoutPayment, presentInvocation, presentPayment } from "../presenters.ts";
+import { findEndpointById } from "../repos/endpoints.ts";
+import { findMerchantById } from "../repos/merchants.ts";
 import { findPaymentById } from "../repos/payments.ts";
+import type { PaymentRow } from "../repos/types.ts";
 import { isProduction } from "../runtime.ts";
 
 export const payRoutes = new Hono<{ Bindings: Env }>();
+
+async function checkoutPayment(env: Env, payment: PaymentRow) {
+  const endpoint = payment.endpoint_id ? await findEndpointById(env.DB, payment.endpoint_id) : null;
+  const merchant = await findMerchantById(env.DB, payment.merchant_id);
+  return presentCheckoutPayment(payment, {
+    serviceName: endpoint?.name ?? "Paid request",
+    settlementAddress: merchant?.settlement_address ?? null,
+  });
+}
 
 payRoutes.get("/:id", async (c) => {
   const payment = await findPaymentById(c.env.DB, c.req.param("id"));
   if (!payment) {
     throw notFound("payment");
   }
-  return c.json({ payment: presentPayment(payment) });
+  return c.json({ payment: await checkoutPayment(c.env, payment) });
 });
 
 payRoutes.post("/:id/verify", async (c) => {
@@ -22,7 +34,7 @@ payRoutes.post("/:id/verify", async (c) => {
   }
   const verified = await verifyStoredPayment(c.env, payment);
   return c.json({
-    payment: presentPayment(verified.payment),
+    payment: await checkoutPayment(c.env, verified.payment),
     matched: verified.payment.state === "PAID" || verified.payment.state === "FULFILLING" || verified.payment.state === "FULFILLED",
   });
 });

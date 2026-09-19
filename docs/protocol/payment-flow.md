@@ -103,11 +103,13 @@ Testnet confirmation: inclusion ([ADR-0018](../architecture/decisions.md#adr-001
 
 ## Checkout
 
-Route: `/pay/{payment_id}`.
+Route: `/pay/{payment_id}` in `apps/checkout`.
 
-Shows merchant logo, service name, amount, asset, Pay with Wallet, privacy panel, Protected by Obscurus. No Obscurus account. No Apple Pay, cards, or custodial balance in MVP.
+Shows service name, amount, asset, Pay with Wallet (WalletConnect AppKit), a short “What is shared?” disclosure, and Protected by Obscurus. No Obscurus account. No Apple Pay, cards, or custodial balance.
 
-After wallet confirmation, UI polls GetPayment until `PAID` or failure, then the original invocation resumes in the background. The pay page does not call the merchant API.
+WalletConnect connects the wallet. After the customer calls `ObscurusPay.pay`, the page verifies and fulfills through the platform API. The pay page does not call the merchant API itself.
+
+Without a WalletConnect project id and deployed contract, local development uses `mock-complete`. That path is forbidden in production.
 
 ## Protocol fee
 

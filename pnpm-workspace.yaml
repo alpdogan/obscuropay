@@ -1,9 +1,14 @@
 packages:
   - "packages/*"
   - "services/*"
+  - "apps/*"
   - "contracts"
 
 allowBuilds:
+  "@reown/appkit": true
+  bufferutil: true
   esbuild: true
+  keccak: true
   sharp: true
+  utf-8-validate: true
   workerd: true

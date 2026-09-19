@@ -243,7 +243,28 @@ describe("payment state machine", () => {
     expect(started.payment.state).toBe("AWAITING_PAYMENT");
     expect(started.invocation.status).toBe("AWAITING_PAYMENT");
     expect(started.payment.checkout_url).toBe(`/pay/${started.payment.id}`);
-    expect(JSON.stringify(started)).not.toMatch(/wallet|address|0x[a-fA-F0-9]{40}/);
+    expect(JSON.stringify(started)).not.toMatch(/wallet|0x[a-fA-F0-9]{40}/);
+
+    const settle = await SELF.fetch("https://obscurus.test/v1/auth/me", {
+      method: "PATCH",
+      headers: { "content-type": "application/json", cookie: session },
+      body: JSON.stringify({ settlement_address: "0x036CbD53842c5426634e7929541eC2318f3dCF7e" }),
+    });
+    expect(settle.status).toBe(200);
+
+    const publicPay = await SELF.fetch(`https://obscurus.test/v1/pay/${started.payment.id}`);
+    const publicJson = (await publicPay.json()) as {
+      payment: { service_name: string; settlement_address: string };
+    };
+    expect(publicJson.payment.service_name).toBe("lookup");
+    expect(publicJson.payment.settlement_address).toBe("0x036CbD53842c5426634e7929541eC2318f3dCF7e");
+    expect(JSON.stringify(publicJson)).not.toMatch(/customer_wallet|payer/);
+
+    const preflight = await SELF.fetch(`https://obscurus.test/v1/pay/${started.payment.id}`, {
+      method: "OPTIONS",
+      headers: { Origin: "http://localhost:3000", "Access-Control-Request-Method": "GET" },
+    });
+    expect(preflight.headers.get("access-control-allow-origin")).toBeTruthy();
 
     const unpaidFulfill = await SELF.fetch(`https://obscurus.test/v1/pay/${started.payment.id}/fulfill`, {
       method: "POST",

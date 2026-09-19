@@ -15,6 +15,7 @@ import {
 import { MockPaymentProvider } from "../src/payment/mock.ts";
 import { assertImplementedPricing, parsePricingType } from "../src/payment/pricing.ts";
 import type { PaymentRecord } from "../src/payment/provider.ts";
+import { amountToTokenUnits, assertEvmAddress, paymentRefToBytes32 } from "../src/payment/amount.ts";
 import { canTransition } from "../src/payment/states.ts";
 
 function payment(state: PaymentRecord["state"], expiresAt: number | null = 9_999_999_999): PaymentRecord {
@@ -118,6 +119,17 @@ describe("single-use entitlements", () => {
     expect(claimed.claimedAt).toBe(2);
     expect(() => claimEntitlement(claimed, 3)).toThrow(DomainError);
     expect(() => claimEntitlement(claimed, 3)).toThrow(/cannot execute twice/);
+  });
+});
+
+describe("token amounts", () => {
+  it("converts USDC decimals and payment refs", () => {
+    expect(amountToTokenUnits("0.25")).toBe(250000n);
+    expect(amountToTokenUnits("10")).toBe(10_000_000n);
+    expect(paymentRefToBytes32("ab".repeat(32))).toBe(`0x${"ab".repeat(32)}`);
+    expect(assertEvmAddress("0x036CbD53842c5426634e7929541eC2318f3dCF7e")).toHaveLength(42);
+    expect(() => amountToTokenUnits("0.1234567")).toThrow(/decimal/);
+    expect(() => assertEvmAddress("not-an-address")).toThrow(DomainError);
   });
 });
 

@@ -7,8 +7,9 @@
   },
   "scripts": {
     "dev": "pnpm --filter @obscurus/platform dev",
-    "test": "pnpm --filter @obscurus/core test && pnpm --filter @obscurus/platform test && pnpm --filter @obscurus/contracts test",
-    "typecheck": "pnpm --filter @obscurus/core typecheck && pnpm --filter @obscurus/platform typecheck && pnpm --filter @obscurus/contracts typecheck",
+    "test": "pnpm --filter @obscurus/core test && pnpm --filter @obscurus/platform test && pnpm --filter @obscurus/contracts test && pnpm --filter @obscurus/checkout test",
+    "typecheck": "pnpm --filter @obscurus/core typecheck && pnpm --filter @obscurus/platform typecheck && pnpm --filter @obscurus/contracts typecheck && pnpm --filter @obscurus/checkout typecheck",
+    "dev:checkout": "pnpm --filter @obscurus/checkout dev",
     "lint": "pnpm typecheck"
   }
 }

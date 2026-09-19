@@ -1,5 +1,6 @@
 import { DomainError } from "@obscurus/core";
 import { Hono } from "hono";
+import { cors } from "hono/cors";
 import { isProduction } from "./runtime.ts";
 import { authRoutes } from "./routes/auth.ts";
 import { curlRoutes } from "./routes/curl.ts";
@@ -31,6 +32,9 @@ export function createApp() {
     const message = isProduction(c.env) ? "Internal error" : err.message;
     return c.json({ error: { code: "internal", message } }, 500);
   });
+
+  app.use("/v1/pay/*", cors());
+  app.use("/v1/invoke", cors());
 
   app.route("/v1/auth", authRoutes);
   app.route("/v1/curl", curlRoutes);

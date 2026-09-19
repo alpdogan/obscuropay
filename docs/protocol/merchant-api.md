@@ -1,6 +1,6 @@
-# Merchant API (Phase 1–4)
+# Merchant API (Phase 1–6)
 
-The merchant control plane, cURL importer, response mapping, and the payment/entitlement state machine. Checkout UI, Telegram, MCP, and on-chain settlement are later. The production payment provider is still `mock` (D1-backed). `MockPaymentProvider` remains the in-memory unit-test double.
+The merchant control plane, cURL importer, response mapping, payment/entitlement state machine, and checkout APIs. Telegram, MCP, and a live chain adapter are later. The production payment provider is still `mock` (D1-backed) until `ObscurusPay` is deployed on Base Sepolia. `MockPaymentProvider` remains the in-memory unit-test double.
 
 Base path: `/v1`. JSON in, JSON out. Sessions use the `obscurus_session` HTTP-only cookie.
 
@@ -12,6 +12,7 @@ Base path: `/v1`. JSON in, JSON out. Sessions use the `obscurus_session` HTTP-on
 - `POST /v1/auth/login` `{ email, password }`
 - `POST /v1/auth/logout`
 - `GET /v1/auth/me`
+- `PATCH /v1/auth/me` `{ settlement_address }` — merchant destination for Base Sepolia USDC. Not a customer wallet.
 
 **Projects**
 
@@ -53,7 +54,7 @@ Merchant payment JSON is `id`, `endpoint_id`, `invocation_id`, `amount`, `asset`
 **Paid invoke (no customer account)**
 
 - `POST /v1/invoke` `{ endpoint_id, input }` — creates an invocation and a `CREATED` → `AWAITING_PAYMENT` charge. `PER_REQUEST` only.
-- `GET /v1/pay/:id`
+- `GET /v1/pay/:id` — public checkout payload: amount, asset, state, `payment_ref`, `service_name`, merchant `settlement_address`. Never a customer wallet.
 - `POST /v1/pay/:id/verify` — idempotent. Issues a single-use entitlement when the payment becomes `PAID`.
 - `POST /v1/pay/:id/fulfill` — claims the entitlement and runs the merchant API at most once.
 - `POST /v1/pay/:id/mock-complete` — development only. Marks the next verify as matched. Forbidden in production.

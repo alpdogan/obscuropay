@@ -1,5 +1,6 @@
 import {
   assertEmail,
+  assertEvmAddress,
   assertPassword,
   conflict,
   hashPassword,
@@ -12,7 +13,7 @@ import { nowSeconds } from "../clock.ts";
 import { randomToken, sha256Hex } from "../crypto.ts";
 import { MAX_AGE, clearSessionCookie, readSessionToken, sessionCookie } from "../http/cookies.ts";
 import { readJson } from "../http/json.ts";
-import { findMerchantByEmail, findMerchantById, insertMerchant } from "../repos/merchants.ts";
+import { findMerchantByEmail, findMerchantById, insertMerchant, updateMerchantSettlement } from "../repos/merchants.ts";
 import { deleteSession, findSessionMerchantId, insertSession } from "../repos/sessions.ts";
 import { isProduction } from "../runtime.ts";
 
@@ -78,7 +79,30 @@ authRoutes.get("/me", async (c) => {
   if (!merchant) {
     throw unauthorized();
   }
-  return c.json({ merchant: { id: merchant.id, email: merchant.email } });
+  return c.json({
+    merchant: { id: merchant.id, email: merchant.email, settlement_address: merchant.settlement_address },
+  });
+});
+
+authRoutes.patch("/me", async (c) => {
+  const token = readSessionToken(c.req.header("cookie"));
+  if (!token) {
+    throw unauthorized();
+  }
+  const merchantId = await findSessionMerchantId(c.env.DB, await sha256Hex(token), nowSeconds());
+  if (!merchantId) {
+    throw unauthorized();
+  }
+  const body = await readJson<{ settlement_address?: string | null }>(c.req.raw);
+  const settlement = body.settlement_address ? assertEvmAddress(body.settlement_address) : null;
+  await updateMerchantSettlement(c.env.DB, merchantId, settlement, nowSeconds());
+  const merchant = await findMerchantById(c.env.DB, merchantId);
+  if (!merchant) {
+    throw unauthorized();
+  }
+  return c.json({
+    merchant: { id: merchant.id, email: merchant.email, settlement_address: merchant.settlement_address },
+  });
 });
 
 async function issueSession(
@@ -95,7 +119,7 @@ async function issueSession(
     now,
   });
   return c.json(
-    { merchant: { id: merchantId, email } },
+    { merchant: { id: merchantId, email, settlement_address: null } },
     201,
     { "Set-Cookie": sessionCookie(token, isProduction(c.env)) },
   );

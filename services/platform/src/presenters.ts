@@ -64,3 +64,14 @@ export function presentPayment(row: PaymentRow) {
     updated_at: row.updated_at,
   };
 }
+
+export function presentCheckoutPayment(
+  row: PaymentRow,
+  extras: { serviceName: string; settlementAddress: string | null },
+) {
+  return {
+    ...presentPayment(row),
+    service_name: extras.serviceName,
+    settlement_address: extras.settlementAddress,
+  };
+}

@@ -2,6 +2,7 @@ export type MerchantRow = {
   id: string;
   email: string;
   password_hash: string;
+  settlement_address: string | null;
 };
 
 export type ProjectRow = {
