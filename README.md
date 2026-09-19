@@ -4,7 +4,7 @@
 
 Privacy-first payment infrastructure for APIs, bots, and autonomous software.
 
-The merchant API, cURL importer, response mapping, and payment state machine run on Cloudflare Workers and D1. `ObscurusPay` is a Foundry contract for Base Sepolia USDC only — it is not deployed, and must not be deployed to mainnet. Hosted checkout lives at `/pay/{payment_id}` (`apps/checkout`). The merchant console is `apps/dashboard`. Telegram bots store the token as a secret and resume the original invocation after checkout. MCP exposes the same endpoints as tools and never spends without an explicit payment. Public HTTP invoke returns `402` with a structured `payment_required` body. Customers do not need an Obscurus account. Runtime payments still use the development mock provider unless WalletConnect and the contract are configured.
+The merchant API, cURL importer, response mapping, and payment state machine run on Cloudflare Workers and D1. `ObscurusPay` is a Foundry contract for Base Sepolia USDC only — it is not deployed, and must not be deployed to mainnet. Hosted checkout lives at `/pay/{payment_id}` (`apps/checkout`). The merchant console is `apps/dashboard`. Telegram bots store the token as a secret and resume the original invocation after checkout. MCP exposes the same endpoints as tools and never spends without an explicit payment. Public HTTP invoke returns `402` with a structured `payment_required` body. The public privacy center is `apps/website` at `/privacy`. Customers do not need an Obscurus account. Runtime payments still use the development mock provider unless WalletConnect and the contract are configured.
 
 **[Architecture book](docs/README.md)** · **[Merchant API](docs/protocol/merchant-api.md)**
 
