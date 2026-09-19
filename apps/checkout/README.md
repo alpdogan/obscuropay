@@ -18,4 +18,4 @@ WalletConnect AppKit lives in `app/pay/[paymentId]/wallet-kit.ts`. Reown’s wag
 
 On-chain pay targets Base Sepolia USDC and `ObscurusPay`. The merchant must set `settlement_address` via `PATCH /v1/auth/me`. Merchants still do not receive the customer wallet from Obscurus.
 
-The payment is visible on a public chain. Do not describe this page as untraceable money.
+The **What is shared?** inspector on the pay page is the customer-facing privacy disclosure. It separates merchant fulfillment data from on-chain visibility and refuses untraceable-money language.

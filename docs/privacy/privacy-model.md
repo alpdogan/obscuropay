@@ -43,7 +43,7 @@ Do not say, imply, or allow sales copy to say:
 - blockchain-level anonymity
 - unlinkability of payer and merchant wallets
 
-The MVP pays USDC on a public EVM network through WalletConnect. A public observer can see a wallet send a visible amount to a visible settlement address, with an opaque `paymentRef` in calldata.
+The MVP pays USDC on a public EVM network through WalletConnect. A public observer can see a wallet send a visible amount to a visible settlement address, with an opaque `paymentRef` in calldata. Checkout repeats this on the **What is shared?** inspector so customers are not sold a stronger privacy story than the chain provides.
 
 Merchant privacy and blockchain anonymity are different properties. This product ships the first. It does not ship the second.
 

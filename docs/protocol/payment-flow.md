@@ -105,7 +105,9 @@ Testnet confirmation: inclusion ([ADR-0018](../architecture/decisions.md#adr-001
 
 Route: `/pay/{payment_id}` in `apps/checkout`.
 
-Shows service name, amount, asset, Pay with Wallet (WalletConnect AppKit), a short “What is shared?” disclosure, and Protected by Obscurus. No Obscurus account. No Apple Pay, cards, or custodial balance.
+Shows service name, amount, asset, Pay with Wallet (WalletConnect AppKit), the **What is shared?** privacy inspector, and Protected by Obscurus. No Obscurus account. No Apple Pay, cards, or custodial balance.
+
+The inspector lists what the merchant receives (paid amount, service, input — not the customer wallet) and what a public chain observer can see (payer wallet, settlement address, amount, opaque `paymentRef`). It does not claim untraceable money.
 
 WalletConnect connects the wallet. After the customer calls `ObscurusPay.pay`, the page verifies and fulfills through the platform API. The pay page does not call the merchant API itself.
 

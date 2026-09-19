@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { readCheckoutConfig, walletPayEnabled } from "../../../lib/config.ts";
 import { postPayment, type CheckoutPayment } from "../../../lib/platform.ts";
+import { PrivacyInspector } from "./privacy-inspector.tsx";
 
 export function PayClient({ payment }: { payment: CheckoutPayment }) {
   const config = useMemo(() => readCheckoutConfig(), []);
@@ -57,14 +58,7 @@ export function PayClient({ payment }: { payment: CheckoutPayment }) {
         {expired ? <p className="error">This payment expired.</p> : null}
         {error ? <p className="error">{error}</p> : null}
         {output ? <p className="muted">{output}</p> : null}
-        <details>
-          <summary>What is shared?</summary>
-          <p>
-            The merchant receives that you paid {current.amount} {current.asset} and your request input. They do not
-            receive your wallet address from Obscurus. The payment itself is visible on a public chain. This is not
-            untraceable money.
-          </p>
-        </details>
+        <PrivacyInspector amount={current.amount} asset={current.asset} serviceName={current.service_name} />
       </div>
       <p className="footer">No Apple Pay. No cards. No Obscurus wallet. WalletConnect connects; Obscurus verifies.</p>
     </>

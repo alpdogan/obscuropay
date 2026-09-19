@@ -108,9 +108,22 @@ button:disabled {
   margin-top: 0.8rem;
 }
 
-details {
+.inspector {
   margin-top: 1rem;
   color: var(--muted);
+}
+
+.inspector section {
+  margin-top: 0.85rem;
+}
+
+.inspector ul {
+  margin: 0.4rem 0 0;
+  padding-left: 1.1rem;
+}
+
+.inspector li {
+  margin: 0.35rem 0;
 }
 
 summary {
