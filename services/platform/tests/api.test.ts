@@ -13,6 +13,22 @@ function cookie(response: Response): string {
   return response.headers.get("set-cookie") ?? "";
 }
 
+describe("observability", () => {
+  it("exposes health and ready with request ids and no secrets", async () => {
+    const health = await SELF.fetch("https://obscurus.test/health", { headers: { "X-Request-Id": "req_testhealth" } });
+    expect(health.status).toBe(200);
+    expect(health.headers.get("X-Request-Id")).toBe("req_testhealth");
+    const healthJson = await health.json();
+    expect(healthJson).toMatchObject({ status: "ok", request_id: "req_testhealth" });
+    expect(JSON.stringify(healthJson)).not.toMatch(/SECRET_KEK|sk_|whsec_/);
+
+    const ready = await SELF.fetch("https://obscurus.test/ready");
+    expect(ready.status).toBe(200);
+    expect(((await ready.json()) as { status: string }).status).toBe("ready");
+    expect(ready.headers.get("X-Request-Id")).toMatch(/^req_/);
+  });
+});
+
 describe("merchant API", () => {
   it("registers, stores a redacted secret, and manages an endpoint", async () => {
     const created = await register("merchant@example.com");

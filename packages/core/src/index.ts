@@ -87,6 +87,14 @@ export {
   type TelegramCommand,
   type TelegramMapping,
 } from "./telegram/parse.ts";
+export {
+  isSensitiveLogKey,
+  newRequestId,
+  redactLogRecord,
+  redactLogValue,
+  redactText,
+  structuredLog,
+} from "./observability/redact.ts";
 export { parseInvokeResult, paymentRequiredBody, type PaymentRequiredBody } from "./http/payment-required.ts";
 export {
   WEBHOOK_EVENTS,

@@ -1,7 +1,8 @@
-import { DomainError } from "@obscurus/core";
+import { DomainError, newRequestId, structuredLog } from "@obscurus/core";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { isProduction } from "./runtime.ts";
+import { healthRoutes } from "./routes/health.ts";
 import { authRoutes } from "./routes/auth.ts";
 import { brandingRoutes } from "./routes/branding.ts";
 import { logoRoutes } from "./routes/logos.ts";
@@ -18,24 +19,45 @@ import { webhookRoutes } from "./routes/webhooks.ts";
 import { telegramMerchantRoutes, telegramWebhookRoutes } from "./routes/telegram.ts";
 
 export function createApp() {
-  const app = new Hono<{ Bindings: Env; Variables: { merchantId: string } }>();
+  const app = new Hono<{ Bindings: Env; Variables: { merchantId: string; requestId: string } }>();
+
+  app.use("*", async (c, next) => {
+    const requestId = c.req.header("X-Request-Id") || newRequestId();
+    c.set("requestId", requestId);
+    c.header("X-Request-Id", requestId);
+    const started = Date.now();
+    await next();
+    console.log(
+      structuredLog({
+        level: "info",
+        request_id: requestId,
+        method: c.req.method,
+        path: new URL(c.req.url).pathname,
+        status: c.res.status,
+        ms: Date.now() - started,
+      }),
+    );
+  });
 
   app.onError((err, c) => {
+    if (!(err instanceof DomainError)) {
+      console.error(
+        structuredLog({
+          level: "error",
+          request_id: c.get("requestId"),
+          error_class: err.name,
+          ...(isProduction(c.env) ? {} : { message: err.message }),
+        }),
+      );
+    }
     if (err instanceof DomainError) {
       return c.json(
-        { error: { code: err.code, message: err.message } },
+        { error: { code: err.code, message: err.message }, request_id: c.get("requestId") },
         err.status as 400 | 401 | 402 | 403 | 404 | 409,
       );
     }
-    console.error(
-      JSON.stringify({
-        level: "error",
-        error_class: err.name,
-        ...(isProduction(c.env) ? {} : { message: err.message }),
-      }),
-    );
     const message = isProduction(c.env) ? "Internal error" : err.message;
-    return c.json({ error: { code: "internal", message } }, 500);
+    return c.json({ error: { code: "internal", message }, request_id: c.get("requestId") }, 500);
   });
 
   app.use("/v1/pay/*", cors());
@@ -44,6 +66,7 @@ export function createApp() {
   app.use("/v1/logos/*", cors());
   app.use("/v1/mcp/*", cors());
 
+  app.route("/", healthRoutes);
   app.route("/v1/auth", authRoutes);
   app.route("/v1/curl", curlRoutes);
   app.route("/v1/projects", projectRoutes);

@@ -69,5 +69,6 @@ Do not describe Obscurus as untraceable money, sanctions avoidance, tax avoidanc
 | [MCP](protocol/mcp.md) | Phase 11 — same endpoints as tools, no silent spend |
 | [HTTP 402](protocol/http-402.md) | Phase 12 — Obscurus-native payment_required |
 | [Webhooks](protocol/webhooks.md) | Phase 13 — HMAC + timestamp, retries, no wallet |
+| [Observability](protocol/observability.md) | Phase 14 — structured logs, request ids, health |
 
 Unresolved decisions are listed at the end of [Architectural decisions](architecture/decisions.md).
