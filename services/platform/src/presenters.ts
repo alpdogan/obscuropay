@@ -67,11 +67,20 @@ export function presentPayment(row: PaymentRow) {
 
 export function presentCheckoutPayment(
   row: PaymentRow,
-  extras: { serviceName: string; settlementAddress: string | null },
+  extras: {
+    serviceName: string;
+    settlementAddress: string | null;
+    displayName: string | null;
+    logoUrl: string | null;
+  },
 ) {
   return {
     ...presentPayment(row),
     service_name: extras.serviceName,
     settlement_address: extras.settlementAddress,
+    branding: {
+      display_name: extras.displayName,
+      logo_url: extras.logoUrl,
+    },
   };
 }

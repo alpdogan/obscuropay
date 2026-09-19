@@ -16,6 +16,8 @@ async function checkoutPayment(env: Env, payment: PaymentRow) {
   return presentCheckoutPayment(payment, {
     serviceName: endpoint?.name ?? "Paid request",
     settlementAddress: merchant?.settlement_address ?? null,
+    displayName: merchant?.display_name ?? null,
+    logoUrl: merchant?.logo_content_type ? `/v1/logos/${merchant.id}` : null,
   });
 }
 

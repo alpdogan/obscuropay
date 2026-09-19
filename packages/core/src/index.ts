@@ -25,6 +25,7 @@ export {
   type Entitlement,
   type EntitlementState,
 } from "./payment/entitlement.ts";
+export { LOGO_MAX_BYTES, LOGO_TYPES, assertDisplayName, inspectLogo, type LogoType } from "./branding/logo.ts";
 export { USDC_DECIMALS, amountToTokenUnits, assertEvmAddress, paymentRefToBytes32 } from "./payment/amount.ts";
 export {
   applyVerification,

@@ -10,6 +10,7 @@ export type CheckoutPayment = {
   service_name: string;
   settlement_address: string | null;
   checkout_url: string;
+  branding?: { display_name: string | null; logo_url: string | null };
 };
 
 export async function fetchPayment(config: CheckoutConfig, paymentId: string): Promise<CheckoutPayment> {

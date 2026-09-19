@@ -51,6 +51,15 @@ After write, only `hint` is returned. Plaintext is never listed.
 
 Merchant payment JSON is `id`, `endpoint_id`, `invocation_id`, `amount`, `asset`, `state`, `payment_ref`, `provider`, `expires_at`, `checkout_url`, timestamps. It never includes a wallet, address, or transaction identity.
 
+**Branding**
+
+- `GET /v1/branding`
+- `PATCH /v1/branding` `{ display_name }` — plain text only. HTML, CSS, and JavaScript are rejected.
+- `PUT /v1/branding/logo` raw PNG/JPEG/WebP, max 256 KiB. Magic bytes must match `Content-Type`. Small logos persist in D1; R2 remains the documented production object store.
+- `GET /v1/logos/:merchant_id` — public image.
+
+There is no field to hide Obscurus disclosures. `disclosures_required` is always `true`.
+
 **Paid invoke (no customer account)**
 
 - `POST /v1/invoke` `{ endpoint_id, input }` — creates an invocation and a `CREATED` → `AWAITING_PAYMENT` charge. `PER_REQUEST` only.

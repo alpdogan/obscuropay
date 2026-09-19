@@ -43,7 +43,15 @@ export function PayClient({ payment }: { payment: CheckoutPayment }) {
   return (
     <>
       <h2>Protected by Obscurus</h2>
-      <h1>{current.service_name}</h1>
+      {current.branding?.logo_url ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          className="logo"
+          src={`${config.platformOrigin}${current.branding.logo_url}`}
+          alt={current.branding.display_name ?? current.service_name}
+        />
+      ) : null}
+      <h1>{current.branding?.display_name ?? current.service_name}</h1>
       <div className="card">
         <p className="muted">Pay with a wallet you already have. You do not need an Obscurus account.</p>
         <p className="amount">

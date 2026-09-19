@@ -257,6 +257,32 @@ describe("payment state machine", () => {
       payment: { service_name: string; settlement_address: string };
     };
     expect(publicJson.payment.service_name).toBe("lookup");
+
+    const htmlLogo = await SELF.fetch("https://obscurus.test/v1/branding", {
+      method: "PATCH",
+      headers: { "content-type": "application/json", cookie: session },
+      body: JSON.stringify({ display_name: "<script>x</script>" }),
+    });
+    expect(htmlLogo.status).toBe(400);
+
+    const named = await SELF.fetch("https://obscurus.test/v1/branding", {
+      method: "PATCH",
+      headers: { "content-type": "application/json", cookie: session },
+      body: JSON.stringify({ display_name: "Paid Lookup" }),
+    });
+    expect(named.status).toBe(200);
+    const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3, 4]);
+    const uploaded = await SELF.fetch("https://obscurus.test/v1/branding/logo", {
+      method: "PUT",
+      headers: { "content-type": "image/png", cookie: session },
+      body: png,
+    });
+    expect(uploaded.status).toBe(200);
+    const branding = (await uploaded.json()) as { branding: { logo_url: string; disclosures_required: boolean } };
+    expect(branding.branding.disclosures_required).toBe(true);
+    const logo = await SELF.fetch(`https://obscurus.test${branding.branding.logo_url}`);
+    expect(logo.status).toBe(200);
+    expect(logo.headers.get("content-type")).toBe("image/png");
     expect(publicJson.payment.settlement_address).toBe("0x036CbD53842c5426634e7929541eC2318f3dCF7e");
     expect(JSON.stringify(publicJson)).not.toMatch(/customer_wallet|payer/);
 

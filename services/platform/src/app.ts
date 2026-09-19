@@ -3,6 +3,8 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { isProduction } from "./runtime.ts";
 import { authRoutes } from "./routes/auth.ts";
+import { brandingRoutes } from "./routes/branding.ts";
+import { logoRoutes } from "./routes/logos.ts";
 import { curlRoutes } from "./routes/curl.ts";
 import { endpointRoutes } from "./routes/endpoints.ts";
 import { invocationRoutes } from "./routes/invocations.ts";
@@ -35,6 +37,7 @@ export function createApp() {
 
   app.use("/v1/pay/*", cors());
   app.use("/v1/invoke", cors());
+  app.use("/v1/logos/*", cors());
 
   app.route("/v1/auth", authRoutes);
   app.route("/v1/curl", curlRoutes);
@@ -45,5 +48,7 @@ export function createApp() {
   app.route("/v1/payments", paymentRoutes);
   app.route("/v1/pay", payRoutes);
   app.route("/v1/invoke", invokeRoutes);
+  app.route("/v1/branding", brandingRoutes);
+  app.route("/v1/logos", logoRoutes);
   return app;
 }

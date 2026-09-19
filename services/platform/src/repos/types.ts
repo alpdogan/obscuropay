@@ -3,6 +3,8 @@ export type MerchantRow = {
   email: string;
   password_hash: string;
   settlement_address: string | null;
+  display_name: string | null;
+  logo_content_type: string | null;
 };
 
 export type ProjectRow = {
