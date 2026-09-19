@@ -29,3 +29,14 @@ export {
   type InputField,
   type InputSchema,
 } from "./endpoint/schema.ts";
+export {
+  applyInputMapping,
+  detectSecretHeader,
+  parseCurl,
+  presentParsedCurl,
+  secretNameFromHeader,
+  suggestInputFields,
+  type ParsedCurl,
+  type ParsedHeader,
+  type SuggestedInput,
+} from "./curl/parse.ts";

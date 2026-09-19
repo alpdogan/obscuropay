@@ -85,9 +85,60 @@ describe("merchant API", () => {
     expect(invocations.status).toBe(200);
   });
 
+  it("imports cURL without echoing secrets and can create an endpoint", async () => {
+    const created = await register("curl@example.com");
+    const session = cookie(created);
+    const projectRes = await SELF.fetch("https://obscurus.test/v1/projects", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: session },
+      body: JSON.stringify({ name: "Curl" }),
+    });
+    const project = ((await projectRes.json()) as { project: { id: string } }).project;
+    const curl = `curl -X POST https://example.com/search -H "Authorization: Bearer SUPERSECRET" -H "Content-Type: application/json" -d '{"query":"john"}'`;
+
+    const imported = await SELF.fetch("https://obscurus.test/v1/curl/import", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: session },
+      body: JSON.stringify({ curl }),
+    });
+    expect(imported.status).toBe(200);
+    const importJson = (await imported.json()) as {
+      import: { headers: { value: string; secret: boolean }[]; suggested_inputs: { name: string }[] };
+    };
+    expect(JSON.stringify(importJson)).not.toContain("SUPERSECRET");
+    expect(importJson.import.headers[0]?.secret).toBe(true);
+    expect(importJson.import.suggested_inputs[0]?.name).toBe("query");
+
+    const fromCurl = await SELF.fetch("https://obscurus.test/v1/endpoints/from-curl", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: session },
+      body: JSON.stringify({
+        project_id: project.id,
+        curl,
+        name: "imported search",
+        customer_fields: ["query"],
+        price_amount: "0.50",
+      }),
+    });
+    expect(fromCurl.status).toBe(201);
+    const createdEndpoint = (await fromCurl.json()) as {
+      endpoint: { body_template: string; headers: { secret_id?: string }[] };
+      secrets: { hint: string }[];
+    };
+    expect(createdEndpoint.endpoint.body_template).toBe('{"query":"{{input.query}}"}');
+    expect(createdEndpoint.endpoint.headers[0]?.secret_id).toBeTruthy();
+    expect(JSON.stringify(createdEndpoint)).not.toContain("SUPERSECRET");
+  });
+
   it("rejects unauthenticated access and localhost endpoints", async () => {
     const anon = await SELF.fetch("https://obscurus.test/v1/projects");
     expect(anon.status).toBe(401);
+    const anonImport = await SELF.fetch("https://obscurus.test/v1/curl/import", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ curl: "curl https://example.com" }),
+    });
+    expect(anonImport.status).toBe(401);
 
     const created = await register("second@example.com");
     const session = cookie(created);

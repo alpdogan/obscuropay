@@ -1,14 +1,18 @@
 import {
   AesGcmSecretBox,
+  applyInputMapping,
   assertHttpMethod,
   assertPriceAmount,
   badRequest,
   inspectUrl,
   newId,
   notFound,
+  parseCurl,
   parseHeaders,
   parseInputSchema,
   renderTemplate,
+  secretHint,
+  secretNameFromHeader,
   slugify,
   validateInput,
   type HeaderSpec,
@@ -22,7 +26,7 @@ import { presentEndpoint, presentInvocation } from "../presenters.ts";
 import { findEndpoint, insertEndpoint, updateEndpoint } from "../repos/endpoints.ts";
 import { findInvocation, insertInvocation, updateInvocation } from "../repos/invocations.ts";
 import { findProject } from "../repos/projects.ts";
-import { findSecret } from "../repos/secrets.ts";
+import { findSecret, insertSecret } from "../repos/secrets.ts";
 import type { EndpointRow, InvocationRow } from "../repos/types.ts";
 import { isProduction } from "../runtime.ts";
 
@@ -41,6 +45,79 @@ type EndpointBody = {
 export const endpointRoutes = new Hono<{ Bindings: Env; Variables: { merchantId: string } }>();
 
 endpointRoutes.use("*", requireMerchant);
+
+endpointRoutes.post("/from-curl", async (c) => {
+  const body = await readJson<{
+    project_id?: string;
+    curl?: string;
+    name?: string;
+    customer_fields?: string[];
+    price_amount?: string;
+    price_asset?: string;
+  }>(c.req.raw);
+  if (typeof body.curl !== "string") {
+    throw badRequest("invalid_curl", "curl is required");
+  }
+  const project = await findProject(c.env.DB, c.get("merchantId"), body.project_id ?? "");
+  if (!project) {
+    throw notFound("project");
+  }
+  const parsed = parseCurl(body.curl);
+  const box = AesGcmSecretBox.fromBase64(c.env.SECRET_KEK);
+  const now = nowSeconds();
+  const headers: HeaderSpec[] = [];
+  const storedSecrets: { id: string; name: string; hint: string }[] = [];
+  for (const header of parsed.headers) {
+    if (header.secret) {
+      const id = newId("secret");
+      const name = `${secretNameFromHeader(header.name)}_${id.slice(-6)}`;
+      await insertSecret(c.env.DB, {
+        id,
+        merchantId: c.get("merchantId"),
+        projectId: project.id,
+        name,
+        ciphertext: await box.encrypt(header.value),
+        hint: secretHint(header.value),
+        now,
+      });
+      storedSecrets.push({ id, name, hint: secretHint(header.value) });
+      headers.push({ name: header.name, secretId: id });
+    } else {
+      headers.push({ name: header.name, value: header.value });
+    }
+  }
+  const selected = body.customer_fields ?? [];
+  const mapped =
+    parsed.body && selected.length > 0
+      ? applyInputMapping(parsed.body, selected)
+      : { template: parsed.body, schema: { fields: [] } };
+  const row = buildEndpointRow({
+    id: newId("endpoint"),
+    merchantId: c.get("merchantId"),
+    projectId: project.id,
+    body: {
+      name: body.name ?? "Imported endpoint",
+      method: parsed.method,
+      url: parsed.url,
+      headers,
+      body_template: mapped.template,
+      input_schema: mapped.schema,
+      price_amount: body.price_amount ?? "0.00",
+      price_asset: body.price_asset ?? "USDC",
+    },
+    now,
+    allowHttp: !isProduction(c.env),
+  });
+  await insertEndpoint(c.env.DB, row);
+  return c.json(
+    {
+      endpoint: presentEndpoint(row),
+      secrets: storedSecrets,
+      warnings: parsed.warnings,
+    },
+    201,
+  );
+});
 
 endpointRoutes.post("/", async (c) => {
   const body = await readJson<EndpointBody>(c.req.raw);

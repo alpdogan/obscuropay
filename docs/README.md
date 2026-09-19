@@ -61,8 +61,7 @@ Do not describe Obscurus as untraceable money, sanctions avoidance, tax avoidanc
 | Document | Status |
 | -------- | ------ |
 | Architecture, protocol, privacy, security | Phase 0 — written |
-| [Merchant API](protocol/merchant-api.md) | Phase 1 — implemented (Workers + D1, mock payments) |
+| [Merchant API](protocol/merchant-api.md) | Phase 1–2 — auth, endpoints, cURL importer |
 | Application UI, contracts, adapters | Not started |
-| Phase 2 (cURL importer) | Blocked on Phase 1 approval |
 
 Unresolved decisions are listed at the end of [Architectural decisions](architecture/decisions.md).

@@ -1,6 +1,6 @@
-# Merchant API (Phase 1)
+# Merchant API (Phase 1–2)
 
-Phase 1 is the merchant control plane. There is no customer checkout, Telegram, MCP, or on-chain payment yet. Payments exist as a `PaymentProvider` port and an in-memory `MockPaymentProvider` for tests.
+The merchant control plane plus a cURL importer. There is no customer checkout, Telegram, MCP, or on-chain payment yet. Payments exist as a `PaymentProvider` port and an in-memory `MockPaymentProvider` for tests.
 
 Base path: `/v1`. JSON in, JSON out. Sessions use the `obscurus_session` HTTP-only cookie.
 
@@ -17,6 +17,11 @@ Base path: `/v1`. JSON in, JSON out. Sessions use the `obscurus_session` HTTP-on
 
 - `POST /v1/projects` `{ name }`
 - `GET /v1/projects`
+
+**cURL importer**
+
+- `POST /v1/curl/import` `{ curl }` — parse only. Secret header values are masked. Never executed as a shell command.
+- `POST /v1/endpoints/from-curl` `{ project_id, curl, name, customer_fields, price_amount, price_asset }` — stores detected secrets, maps selected JSON fields to `{{input.*}}`, creates the endpoint. SSRF still applies to the URL.
 
 **Endpoints**
 
@@ -72,3 +77,9 @@ pnpm --filter @obscurus/platform dev
 ```
 
 `SECRET_KEK` must be 32 bytes, base64. Do not commit `.dev.vars`.
+
+## Phase 2 notes
+
+The importer is a parser, not a shell. Pipes, `$(...)`, backticks, and `-o` file writes are ignored or recorded as warnings. They are never executed.
+
+Unresolved: form-urlencoded bodies as customer inputs (JSON only today); nested JSON paths (top-level keys only).

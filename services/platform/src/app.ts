@@ -2,6 +2,7 @@ import { DomainError } from "@obscurus/core";
 import { Hono } from "hono";
 import { isProduction } from "./runtime.ts";
 import { authRoutes } from "./routes/auth.ts";
+import { curlRoutes } from "./routes/curl.ts";
 import { endpointRoutes } from "./routes/endpoints.ts";
 import { invocationRoutes } from "./routes/invocations.ts";
 import { projectRoutes } from "./routes/projects.ts";
@@ -29,6 +30,7 @@ export function createApp() {
   });
 
   app.route("/v1/auth", authRoutes);
+  app.route("/v1/curl", curlRoutes);
   app.route("/v1/projects", projectRoutes);
   app.route("/v1/endpoints", endpointRoutes);
   app.route("/v1/secrets", secretRoutes);
