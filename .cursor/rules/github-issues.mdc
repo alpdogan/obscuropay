@@ -12,10 +12,10 @@ Before writing code or a commit message, run `gh issue list --repo alpdogan/obsc
 - If no open issue matches, open one with `gh issue create` before the change. Do not start the work without an issue.
 - A commit that finishes the issue ends with `Fixes #<number>`.
 - A commit that only advances it ends with `Refs #<number>`.
-- One issue per commit. Do not invent a number, and do not leave the trailer off.
+- One issue per commit. Do not invent a number, and do not leave the trailer off. Never copy a number from an example. The only valid number is the one `gh issue list` returned for this diff.
 
 ```
-feat: verify Base Sepolia payments before fulfillment
+feat: short summary of the change
 
-Fixes #42
+Fixes #<matched issue number>
 ```

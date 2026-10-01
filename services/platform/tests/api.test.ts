@@ -589,7 +589,7 @@ describe("http 402", () => {
     const first = await SELF.fetch("https://obscurus.test/v1/invoke/person_search", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ query: "John" }),
+      body: JSON.stringify({ query: "John", project_id: project.id }),
     });
     expect(first.status).toBe(402);
     const required = (await first.json()) as {
@@ -608,7 +608,7 @@ describe("http 402", () => {
     const second = await SELF.fetch("https://obscurus.test/v1/invoke/person_search", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ query: "John", payment_id: required.payment.id }),
+      body: JSON.stringify({ query: "John", payment_id: required.payment.id, project_id: project.id }),
     });
     expect(second.status).toBe(200);
     const paid = (await second.json()) as { result: unknown };
