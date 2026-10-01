@@ -1,3 +1,8 @@
 # 32-byte key, base64. Generate a unique key for every environment.
 # openssl rand -base64 32
 SECRET_KEK=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+
+# Base Sepolia ObscurusPay address. Leave unset to keep the development mock provider.
+# PAY_CONTRACT=
+# CHAIN_RPC_URL=https://sepolia.base.org
+# USDC_ADDRESS=0x036CbD53842c5426634e7929541eC2318f3dCF7e

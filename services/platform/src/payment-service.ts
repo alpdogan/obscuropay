@@ -7,12 +7,15 @@ import {
   completeFulfillment,
   conflict,
   createPerRequestEntitlement,
+  amountToTokenUnits,
   expirePayment,
+  failPayment,
   isExpired,
   newId,
   newPaymentRef,
   notFound,
   openPayment,
+  paymentRefToBytes32,
   parseInputSchema,
   parsePricingType,
   requirePaidForFulfill,
@@ -21,12 +24,15 @@ import {
   type PaymentRecord,
   type PaymentState,
 } from "@obscurus/core";
+import { chainSettings, developmentMockMatched, fetchPaymentLogs, matchPaymentLogs } from "./chain/payment-log.ts";
 import { nowSeconds } from "./clock.ts";
 import { executeStoredEndpoint } from "./execute-endpoint.ts";
 import { findEntitlementByPayment, insertEntitlement, updateEntitlement } from "./repos/entitlements.ts";
 import { findEndpointById } from "./repos/endpoints.ts";
 import { findInvocationById, insertInvocation, updateInvocation } from "./repos/invocations.ts";
+import { findMerchantById } from "./repos/merchants.ts";
 import { insertPayment, updatePayment } from "./repos/payments.ts";
+import { isProduction } from "./runtime.ts";
 import type { EntitlementRow, EndpointRow, InvocationRow, PaymentRow } from "./repos/types.ts";
 import { emitMerchantWebhooks } from "./webhooks/dispatch.ts";
 
@@ -112,7 +118,7 @@ export async function startPaidInvocation(
     asset: endpoint.price_asset,
     state: "CREATED",
     paymentRef: newPaymentRef(),
-    provider: "mock",
+    provider: chainSettings(env) ? "base-sepolia" : "mock",
     expiresAt: now + PAYMENT_TTL_SECONDS,
   });
   const payment: PaymentRow = {
@@ -169,19 +175,51 @@ export async function verifyStoredPayment(env: Env, payment: PaymentRow): Promis
 }> {
   const now = nowSeconds();
   let record = toPaymentRecord(payment);
+  let chainMismatch = false;
   if (isExpired(record, now)) {
     record = expirePayment(record);
-  } else {
-    const matched = payment.mock_ready === 1 || record.state === "PAID" || record.state === "FULFILLING" || record.state === "FULFILLED";
-    record = applyVerification(record, { matched, state: matched ? "PAID" : record.state }, now);
+  } else if (payment.provider === "base-sepolia") {
+    const chain = chainSettings(env);
+    const merchant = await findMerchantById(env.DB, payment.merchant_id);
+    if (!chain || !merchant?.settlement_address) {
+      chainMismatch = false;
+    } else {
+      const logs = await fetchPaymentLogs(chain.rpcUrl, chain.contract, paymentRefToBytes32(payment.payment_ref));
+      const match = matchPaymentLogs(logs, {
+        contract: chain.contract,
+        paymentRef: payment.payment_ref,
+        merchant: merchant.settlement_address,
+        asset: chain.usdc,
+        amount: amountToTokenUnits(payment.amount),
+      });
+      if (match === "matched") {
+        record = applyVerification(record, { matched: true, state: "PAID" }, now);
+      } else if (match === "mismatch" && (record.state === "AWAITING_PAYMENT" || record.state === "CONFIRMING")) {
+        chainMismatch = true;
+        record = failPayment(record);
+      }
+    }
+  } else if (
+    developmentMockMatched({
+      production: isProduction(env),
+      provider: payment.provider,
+      mockReady: payment.mock_ready,
+    })
+  ) {
+    record = applyVerification(record, { matched: true, state: "PAID" }, now);
   }
   const next = applyRecord(payment, record, now);
   await updatePayment(env.DB, next);
 
-  if (next.state === "EXPIRED" && payment.invocation_id) {
+  if ((next.state === "EXPIRED" || chainMismatch) && payment.invocation_id) {
     const invocation = await findInvocationById(env.DB, payment.invocation_id);
     if (invocation && invocation.status === "AWAITING_PAYMENT") {
-      await updateInvocation(env.DB, { ...invocation, status: "FAILED", error_class: "payment_expired", completed_at: now });
+      await updateInvocation(env.DB, {
+        ...invocation,
+        status: "FAILED",
+        error_class: chainMismatch ? "payment_mismatch" : "payment_expired",
+        completed_at: now,
+      });
     }
   }
 

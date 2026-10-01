@@ -6,6 +6,9 @@ interface Env {
   PLATFORM_PUBLIC_ORIGIN?: string;
   TELEGRAM_STUB?: string;
   WEBHOOK_STUB?: string;
+  PAY_CONTRACT?: string;
+  CHAIN_RPC_URL?: string;
+  USDC_ADDRESS?: string;
   TEST_MIGRATIONS?: { name: string; queries: string[] }[];
 }
 

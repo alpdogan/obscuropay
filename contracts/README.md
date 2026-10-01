@@ -28,6 +28,12 @@ pnpm --filter @obscurus/contracts test
 pnpm --filter @obscurus/contracts typecheck
 ```
 
-A Base Sepolia deploy script exists at `script/DeployBaseSepolia.s.sol`. It reverts on any other `chainid`. Do not broadcast it as part of this repository’s default workflow.
+A Base Sepolia deploy script exists at `script/DeployBaseSepolia.s.sol`. It reverts on any other `chainid`. Do not broadcast it as part of this repository’s default workflow, and do not point it at mainnet. `feeBps` is still an open product decision; tests use 100 as a placeholder.
 
-Verification of `paymentRef`, amount, and asset still happens in the Worker (`PaymentProvider`). This contract is the on-chain adapter, not a source of customer identity.
+```bash
+forge script script/DeployBaseSepolia.s.sol:DeployBaseSepolia \
+  --rpc-url "$BASE_SEPOLIA_RPC" --broadcast --sig "run(address,uint16,address)" \
+  "$TREASURY" 100 "$OWNER"
+```
+
+Put the deployed address in the Worker as `PAY_CONTRACT` and in checkout as `NEXT_PUBLIC_PAY_CONTRACT`. The Worker verifies `paymentRef`, merchant, asset, and amount from `PaymentReceived` logs. This contract is not a source of customer identity.

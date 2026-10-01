@@ -95,7 +95,7 @@ Never stored on-chain: Telegram IDs, names, emails, query text, API arguments, m
 
 Admin: owner may set treasury, `feeBps` (capped), and pause. There is no withdraw or token rescue. Independent audit before mainnet. **Do not deploy mainnet.**
 
-The Worker still verifies events (`paymentRef`, asset, amount) before `PAID`. A Solidity adapter is not wired into `PaymentProvider` yet.
+When `PAY_CONTRACT` is set, the Worker opens payments with provider `base-sepolia` and marks `PAID` only after `eth_getLogs` returns a `PaymentReceived` log for that `paymentRef` whose merchant, asset, and amount match. A mismatched log fails the payment. A missing log stays `AWAITING_PAYMENT` so checkout can retry. The payer wallet and transaction hash are not stored. Without `PAY_CONTRACT`, local development keeps the mock provider. Production never confirms from `mock_ready`.
 
 WalletConnect **AppKit** is the wallet connection. Obscurus is the processor. Not WalletConnect Pay.
 

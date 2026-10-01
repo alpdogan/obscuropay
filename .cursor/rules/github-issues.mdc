@@ -1,0 +1,21 @@
+---
+description: Link every change to a GitHub issue and put that number in the commit message
+alwaysApply: true
+---
+
+# GitHub issues and commit messages
+
+Repository: `alpdogan/obscuropay`. Issue text and commit messages are English.
+
+Before writing code or a commit message, run `gh issue list --repo alpdogan/obscuropay --state open --limit 50`. Match the diff to one open issue by title and body. Do not guess a number.
+
+- If no open issue matches, open one with `gh issue create` before the change. Do not start the work without an issue.
+- A commit that finishes the issue ends with `Fixes #<number>`.
+- A commit that only advances it ends with `Refs #<number>`.
+- One issue per commit. Do not invent a number, and do not leave the trailer off.
+
+```
+feat: verify Base Sepolia payments before fulfillment
+
+Fixes #42
+```

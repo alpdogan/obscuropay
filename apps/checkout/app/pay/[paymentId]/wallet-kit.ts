@@ -23,7 +23,7 @@ if (config.walletConnectProjectId) {
     metadata: {
       name: "Obscurus Checkout",
       description: "Prove you paid. Not who you are.",
-      url: "http://localhost:3000",
+      url: typeof window === "undefined" ? "http://localhost:3000" : window.location.origin,
       icons: [],
     },
     features: {

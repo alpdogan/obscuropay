@@ -10,7 +10,7 @@ This is data minimization. It is not untraceable money. MVP settlement is USDC o
 
 ## Status
 
-Apache-2.0. Phases 0–16 are implemented. `ObscurusPay` is **not deployed** and must not be deployed to mainnet. Runtime payments still use the development mock provider unless WalletConnect and the contract are configured.
+Apache-2.0. Phases 0–16 are implemented. `ObscurusPay` is **not deployed** by this repository and must not be deployed to mainnet. Set `PAY_CONTRACT` and a WalletConnect project id to verify Base Sepolia USDC. Otherwise local development uses the mock provider, which production refuses.
 
 ## Layout
 

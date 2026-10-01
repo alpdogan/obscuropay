@@ -1,9 +1,19 @@
 "use client";
 
+import { amountToTokenUnits, paymentRefToBytes32 } from "@obscurus/core";
 import { useMemo, useState } from "react";
 import { readCheckoutConfig, walletPayEnabled } from "../../../lib/config.ts";
 import { postPayment, type CheckoutPayment } from "../../../lib/platform.ts";
 import { PrivacyInspector } from "./privacy-inspector.tsx";
+import { WalletPay } from "./wallet-pay.tsx";
+
+const PAID = new Set(["PAID", "FULFILLING", "FULFILLED"]);
+const VERIFY_ATTEMPTS = 8;
+const VERIFY_DELAY_MS = 1500;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 export function PayClient({ payment }: { payment: CheckoutPayment }) {
   const config = useMemo(() => readCheckoutConfig(), []);
@@ -13,25 +23,43 @@ export function PayClient({ payment }: { payment: CheckoutPayment }) {
   const [busy, setBusy] = useState(false);
   const onChain = walletPayEnabled(config);
   const expired = current.state === "EXPIRED";
-  const paid = current.state === "PAID" || current.state === "FULFILLING" || current.state === "FULFILLED";
+  const paid = PAID.has(current.state);
 
   async function finishAfterChain() {
-    const verified = await postPayment(config, current.id, "verify");
-    setCurrent(verified.payment);
+    let latest = current;
+    let lastError: Error | null = null;
+    for (let attempt = 0; attempt < VERIFY_ATTEMPTS; attempt += 1) {
+      try {
+        const verified = await postPayment(config, current.id, "verify");
+        latest = verified.payment;
+        setCurrent(latest);
+        lastError = null;
+        if (PAID.has(latest.state) || latest.state === "FAILED" || latest.state === "EXPIRED") {
+          break;
+        }
+      } catch (err) {
+        lastError = err instanceof Error ? err : new Error("Verification failed");
+      }
+      if (attempt < VERIFY_ATTEMPTS - 1) {
+        await sleep(VERIFY_DELAY_MS);
+      }
+    }
+    if (!PAID.has(latest.state)) {
+      if (latest.state === "FAILED") {
+        throw new Error("Payment did not match the expected amount, asset, or merchant.");
+      }
+      throw lastError ?? new Error("Payment is not confirmed yet. Try again in a moment.");
+    }
     const fulfilled = await postPayment(config, current.id, "fulfill");
     setCurrent(fulfilled.payment);
     setOutput(fulfilled.invocation?.output_preview ?? "Paid.");
   }
 
-  async function pay() {
+  async function payWithMock() {
     setBusy(true);
     setError(null);
     try {
-      if (onChain) {
-        throw new Error("WalletConnect AppKit is configured. Use wallet-kit.ts after the pay contract is deployed.");
-      } else {
-        await postPayment(config, current.id, "mock-complete");
-      }
+      await postPayment(config, current.id, "mock-complete");
       await finishAfterChain();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Payment failed");
@@ -58,9 +86,18 @@ export function PayClient({ payment }: { payment: CheckoutPayment }) {
           {current.amount} {current.asset}
         </p>
         <p className="muted">State: {current.state}</p>
-        {paid ? null : (
-          <button type="button" disabled={busy || expired} onClick={() => void pay()}>
-            {busy ? "Confirming…" : onChain ? "Pay with wallet" : "Pay with wallet (development mock)"}
+        {paid ? null : onChain ? (
+          <WalletPay
+            disabled={busy || expired}
+            amountUnits={amountToTokenUnits(current.amount)}
+            paymentRef={paymentRefToBytes32(current.payment_ref)}
+            settlement={current.settlement_address}
+            onPaid={finishAfterChain}
+            onError={setError}
+          />
+        ) : (
+          <button type="button" disabled={busy || expired} onClick={() => void payWithMock()}>
+            {busy ? "Confirming…" : "Pay with wallet (development mock)"}
           </button>
         )}
         {expired ? <p className="error">This payment expired.</p> : null}

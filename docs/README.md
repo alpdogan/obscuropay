@@ -62,7 +62,7 @@ Do not describe Obscurus as untraceable money, sanctions avoidance, tax avoidanc
 | -------- | ------ |
 | Architecture, protocol, privacy, security | Phase 0 — written |
 | [Merchant API](protocol/merchant-api.md) | Phase 1–4 — auth, cURL, response mapping, payments |
-| [ObscurusPay](../contracts/README.md) | Phase 5 — Base Sepolia USDC contract, not deployed |
+| [ObscurusPay](../contracts/README.md) | Phase 5 — Worker verifies Base Sepolia logs when `PAY_CONTRACT` is set; contract is not deployed by this repo |
 | [Checkout](../apps/checkout/README.md) | Phase 6–8 — checkout, privacy inspector, merchant branding |
 | [Dashboard](../apps/dashboard/README.md) | Phase 9 — merchant console, no customer wallets |
 | [Telegram](protocol/telegram.md) | Phase 10 — no-code bot adapter, token stored as a hint |

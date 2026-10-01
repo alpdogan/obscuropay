@@ -13,6 +13,7 @@ export function WalletPay(props: {
   onError: (message: string) => void;
 }) {
   const [ready, setReady] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -31,6 +32,7 @@ export function WalletPay(props: {
       props.onError("Merchant has not set a settlement address");
       return;
     }
+    setSubmitting(true);
     try {
       const { writeContract } = await import("./wallet-kit.ts");
       const config = readCheckoutConfig();
@@ -52,13 +54,15 @@ export function WalletPay(props: {
       await props.onPaid();
     } catch (error) {
       props.onError(error instanceof Error ? error.message : "Wallet payment failed");
+    } finally {
+      setSubmitting(false);
     }
   }
 
   return (
     <>
       <appkit-button />
-      <button type="button" disabled={props.disabled || !ready} onClick={() => void pay()}>
+      <button type="button" disabled={props.disabled || !ready || submitting} onClick={() => void pay()}>
         Pay with wallet
       </button>
     </>

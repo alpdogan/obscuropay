@@ -1,6 +1,6 @@
 # Merchant API (Phase 1–14)
 
-The merchant control plane, cURL importer, response mapping, payment/entitlement state machine, checkout APIs, the Next.js merchant dashboard, Telegram, MCP, HTTP 402, and signed webhooks. A live chain adapter is later. The production payment provider is still `mock` (D1-backed) until `ObscurusPay` is deployed on Base Sepolia. `MockPaymentProvider` remains the in-memory unit-test double.
+The merchant control plane, cURL importer, response mapping, payment/entitlement state machine, checkout APIs, the Next.js merchant dashboard, Telegram, MCP, HTTP 402, and signed webhooks. With `PAY_CONTRACT` set, verify reads Base Sepolia `PaymentReceived` logs. Without it, the D1-backed mock provider is used and `POST /v1/pay/:id/mock-complete` is refused in production. `MockPaymentProvider` remains the in-memory unit-test double. `ObscurusPay` is not deployed by this repository and must not be deployed to mainnet.
 
 Base path: `/v1`. JSON in, JSON out. Sessions use the `obscurus_session` HTTP-only cookie. `GET /health` and `GET /ready` are unauthenticated. Every response includes `X-Request-Id`. See [observability](observability.md).
 
