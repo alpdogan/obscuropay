@@ -19,7 +19,7 @@ test.describe('Payment Flow E2E', () => {
     
     // Wait for redirect to dashboard
     await page.waitForURL('http://localhost:3002/overview');
-    await expect(page.locator('h1')).toContainText('Overview');
+    await expect(page.locator('h1')).toContainText('Prove you paid');
 
     // 2. Create project via API
     const projectResponse = await page.request.post('http://localhost:8787/v1/projects', {

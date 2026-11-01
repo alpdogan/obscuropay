@@ -22,7 +22,7 @@ test.describe('Merchant Flow E2E', () => {
 
     // 3. Verify redirect to dashboard
     await page.waitForURL('http://localhost:3002/overview');
-    await expect(page.locator('h1')).toContainText('Overview');
+    await expect(page.locator('h1')).toContainText('Prove you paid');
     await expect(page.locator('nav')).toContainText('Endpoints');
     await expect(page.locator('nav')).toContainText('Payments');
 
