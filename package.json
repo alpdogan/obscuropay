@@ -8,10 +8,18 @@
   "scripts": {
     "dev": "pnpm --filter @obscurus/platform dev",
     "test": "pnpm --filter @obscurus/core test && pnpm --filter @obscurus/platform test && pnpm --filter @obscurus/contracts test && pnpm --filter @obscurus/checkout test && pnpm --filter @obscurus/dashboard test && pnpm --filter @obscurus/website test",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:report": "playwright show-report",
     "typecheck": "pnpm --filter @obscurus/core typecheck && pnpm --filter @obscurus/platform typecheck && pnpm --filter @obscurus/contracts typecheck && pnpm --filter @obscurus/checkout typecheck && pnpm --filter @obscurus/dashboard typecheck && pnpm --filter @obscurus/website typecheck",
     "dev:checkout": "pnpm --filter @obscurus/checkout dev",
     "dev:dashboard": "pnpm --filter @obscurus/dashboard dev",
     "dev:website": "pnpm --filter @obscurus/website dev",
     "lint": "pnpm typecheck"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "playwright": "^1.64.1"
   }
 }
