@@ -39,6 +39,12 @@ Optional: `pnpm dev:dashboard`, `pnpm dev:checkout`, `pnpm dev:website`.
 
 Do not commit `.dev.vars` or other secrets.
 
+## Testing
+
+**[Testing Guide](docs/testing/README.md)** · **[Mock Provider](docs/testing/mock-provider.md)** · **[Demo Flow](docs/testing/demo-flow.md)**
+
+The platform uses `MockPaymentProvider` for local development and testing without blockchain setup. See the testing guide for end-to-end examples.
+
 ## Docs
 
 **[Architecture book](docs/README.md)** · **[Merchant API](docs/protocol/merchant-api.md)** · **[Privacy](apps/website/app/privacy/page.tsx)** · **[Security](SECURITY.md)** · **[Contributing](CONTRIBUTING.md)** · **[Code of conduct](CODE_OF_CONDUCT.md)** · **[Changelog](CHANGELOG.md)**

@@ -16,7 +16,7 @@ Phase 0 is documentation only. There is no application code yet.
 4. [Trust boundaries](architecture/trust-boundaries.md) — who is trusted for what
 5. [Architectural decisions](architecture/decisions.md) — ADRs awaiting review
 
-Then read protocol, privacy, and security:
+Then read protocol, privacy, security, and testing:
 
 - [Invocation flow](protocol/invocation-flow.md)
 - [Payment flow](protocol/payment-flow.md)
@@ -24,6 +24,7 @@ Then read protocol, privacy, and security:
 - [Data classification](privacy/data-classification.md)
 - [Security model](security/security-model.md)
 - [Threat model](security/threat-model.md)
+- **[Testing guide](testing/README.md)** — MockPaymentProvider and demo flows
 
 ## What this product is
 
