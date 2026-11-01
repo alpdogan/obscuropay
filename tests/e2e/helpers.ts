@@ -1,19 +1,19 @@
 import { Page } from '@playwright/test';
 
 export async function registerMerchant(page: Page, email: string, password: string) {
-  await page.goto('http://localhost:3001/register');
+  await page.goto('http://localhost:3002/register');
   await page.fill('input[name="email"]', email);
   await page.fill('input[name="password"]', password);
   await page.click('button[type="submit"]');
-  await page.waitForURL('http://localhost:3001/overview');
+  await page.waitForURL('http://localhost:3002/overview');
 }
 
 export async function loginMerchant(page: Page, email: string, password: string) {
-  await page.goto('http://localhost:3001/login');
+  await page.goto('http://localhost:3002/login');
   await page.fill('input[name="email"]', email);
   await page.fill('input[name="password"]', password);
   await page.click('button[type="submit"]');
-  await page.waitForURL('http://localhost:3001/overview');
+  await page.waitForURL('http://localhost:3002/overview');
 }
 
 export async function createProject(page: Page, name: string): Promise<string> {

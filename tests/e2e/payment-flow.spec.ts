@@ -12,13 +12,13 @@ test.describe('Payment Flow E2E', () => {
 
   test('should complete full payment flow with mock provider', async ({ page }) => {
     // 1. Register merchant
-    await page.goto('http://localhost:3001/register');
+    await page.goto('http://localhost:3002/register');
     await page.fill('input[name="email"]', merchantEmail);
     await page.fill('input[name="password"]', 'test-password-123');
     await page.click('button[type="submit"]');
     
     // Wait for redirect to dashboard
-    await page.waitForURL('http://localhost:3001/overview');
+    await page.waitForURL('http://localhost:3002/overview');
     await expect(page.locator('h1')).toContainText('Overview');
 
     // 2. Create project via API
@@ -77,7 +77,7 @@ test.describe('Payment Flow E2E', () => {
     await expect(page.locator('.muted')).toContainText('State: FULFILLED');
 
     // 8. Verify in dashboard
-    await page.goto('http://localhost:3001/payments');
+    await page.goto('http://localhost:3002/payments');
     await expect(page.locator('table')).toContainText('Test Endpoint');
     await expect(page.locator('table')).toContainText('0.25');
     await expect(page.locator('table')).toContainText('FULFILLED');

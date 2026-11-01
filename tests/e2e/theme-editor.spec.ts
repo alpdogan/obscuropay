@@ -9,15 +9,15 @@ test.describe('Dashboard Theme Editor E2E', () => {
 
   test('should customize theme via dashboard and see changes on checkout', async ({ page, context }) => {
     // 1. Register and login
-    await page.goto('http://localhost:3001/register');
+    await page.goto('http://localhost:3002/register');
     await page.fill('input[name="email"]', merchantEmail);
     await page.fill('input[name="password"]', 'test-password-123');
     await page.click('button[type="submit"]');
     
-    await page.waitForURL('http://localhost:3001/overview');
+    await page.waitForURL('http://localhost:3002/overview');
 
     // 2. Navigate to Branding page
-    await page.goto('http://localhost:3001/branding');
+    await page.goto('http://localhost:3002/branding');
     await expect(page.locator('h1')).toContainText('Checkout appearance');
 
     // 3. Verify Theme Editor is visible
@@ -83,7 +83,7 @@ test.describe('Dashboard Theme Editor E2E', () => {
     await checkoutPage.close();
 
     // 10. Reset theme to default
-    await page.goto('http://localhost:3001/branding');
+    await page.goto('http://localhost:3002/branding');
     await page.click('button:has-text("Reset to Default")');
     await page.click('button:has-text("Save Theme")');
     await expect(page.locator('text=Theme saved')).toBeVisible({ timeout: 5000 });

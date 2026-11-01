@@ -26,19 +26,19 @@ export default defineConfig({
     {
       command: 'pnpm --filter @obscurus/platform dev',
       url: 'http://localhost:8787/health',
-      timeout: 30000,
+      timeout: 60000,
       reuseExistingServer: !process.env.CI,
     },
     {
       command: 'pnpm --filter @obscurus/dashboard dev',
-      url: 'http://localhost:3001',
-      timeout: 30000,
+      url: 'http://localhost:3002',
+      timeout: 60000,
       reuseExistingServer: !process.env.CI,
     },
     {
       command: 'pnpm --filter @obscurus/checkout dev',
       url: 'http://localhost:3000',
-      timeout: 30000,
+      timeout: 60000,
       reuseExistingServer: !process.env.CI,
     },
   ],
