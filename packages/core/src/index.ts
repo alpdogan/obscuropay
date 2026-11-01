@@ -117,3 +117,11 @@ export {
   type McpSpendingPolicy,
   type McpTool,
 } from "./mcp/tools.ts";
+export {
+  defaultTheme,
+  isValidHexColor,
+  mergeTheme,
+  themeToCssVariables,
+  validateTheme,
+  type Theme,
+} from "./theme.ts";

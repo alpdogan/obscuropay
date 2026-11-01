@@ -5,6 +5,7 @@ export type MerchantRow = {
   settlement_address: string | null;
   display_name: string | null;
   logo_content_type: string | null;
+  theme_config: string | null;
 };
 
 export type ProjectRow = {
