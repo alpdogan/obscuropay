@@ -67,7 +67,7 @@ The platform uses `MockPaymentProvider` for local development and testing withou
 
 ## Docs
 
-**[Architecture book](docs/README.md)** · **[Merchant API](docs/protocol/merchant-api.md)** · **[Privacy](apps/website/app/privacy/page.tsx)** · **[Security](SECURITY.md)** · **[Contributing](CONTRIBUTING.md)** · **[Code of conduct](CODE_OF_CONDUCT.md)** · **[Changelog](CHANGELOG.md)**
+**[Architecture book](docs/README.md)** · **[Merchant API](docs/protocol/merchant-api.md)** · **[Chain & Token Support](docs/protocol/chain-token-support.md)** · **[Privacy](apps/website/app/privacy/page.tsx)** · **[Security](SECURITY.md)** · **[Contributing](CONTRIBUTING.md)** · **[Code of conduct](CODE_OF_CONDUCT.md)** · **[Changelog](CHANGELOG.md)**
 
 ## License
 

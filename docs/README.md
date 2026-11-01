@@ -20,6 +20,7 @@ Then read protocol, privacy, security, and testing:
 
 - [Invocation flow](protocol/invocation-flow.md)
 - [Payment flow](protocol/payment-flow.md)
+- [Chain & Token Support](protocol/chain-token-support.md) — supported chains and tokens
 - [Privacy model](privacy/privacy-model.md)
 - [Data classification](privacy/data-classification.md)
 - [Security model](security/security-model.md)
