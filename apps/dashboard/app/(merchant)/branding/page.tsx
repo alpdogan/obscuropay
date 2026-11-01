@@ -1,9 +1,11 @@
 import { saveBrandingAction } from "../../../lib/actions.ts";
 import { api } from "../../../lib/api.ts";
+import { ThemeEditor } from "../../../components/theme-editor.tsx";
+import type { Theme } from "@obscurus/core";
 
 export default async function BrandingPage() {
   const data = await api<{
-    branding: { display_name: string | null; logo_url: string | null; disclosures_required: boolean };
+    branding: { display_name: string | null; logo_url: string | null; disclosures_required: boolean; theme?: Theme | null };
   }>("/v1/branding");
   return (
     <>
@@ -20,6 +22,7 @@ export default async function BrandingPage() {
         </label>
         <button type="submit">Save name</button>
       </form>
+      <ThemeEditor initialTheme={data.branding.theme} />
     </>
   );
 }
