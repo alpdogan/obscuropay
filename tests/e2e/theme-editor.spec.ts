@@ -8,6 +8,8 @@ test.describe('Dashboard Theme Editor E2E', () => {
   });
 
   test('should customize theme via dashboard and see changes on checkout', async ({ page, context }) => {
+    test.setTimeout(90000); // 90 seconds for checkout build
+    
     // 1. Register and login
     await page.goto('http://localhost:3002/register');
     await page.fill('input[name="email"]', merchantEmail);
