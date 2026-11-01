@@ -37,6 +37,26 @@ pnpm dev
 
 Optional: `pnpm dev:dashboard`, `pnpm dev:checkout`, `pnpm dev:website`.
 
+### End-to-End Tests
+
+Run E2E tests with Playwright:
+
+```bash
+# Run all E2E tests (starts servers automatically)
+pnpm test:e2e
+
+# Run with UI mode
+pnpm test:e2e:ui
+
+# Run in headed mode (see browser)
+pnpm test:e2e:headed
+
+# View test report
+pnpm test:e2e:report
+```
+
+E2E tests include video recordings saved to `test-results/` directory.
+
 Do not commit `.dev.vars` or other secrets.
 
 ## Testing

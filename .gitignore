@@ -26,6 +26,12 @@ dist/
 coverage/
 *.tsbuildinfo
 
+# playwright
+test-results/
+playwright-report/
+playwright/.cache/
+videos/
+
 # os / editor
 .DS_Store
 .idea/
