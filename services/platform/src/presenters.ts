@@ -72,6 +72,7 @@ export function presentCheckoutPayment(
     settlementAddress: string | null;
     displayName: string | null;
     logoUrl: string | null;
+    themeConfig: string | null;
   },
 ) {
   return {
@@ -81,6 +82,7 @@ export function presentCheckoutPayment(
     branding: {
       display_name: extras.displayName,
       logo_url: extras.logoUrl,
+      theme: extras.themeConfig ? JSON.parse(extras.themeConfig) : null,
     },
   };
 }
