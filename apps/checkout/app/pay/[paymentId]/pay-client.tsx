@@ -2,6 +2,7 @@
 
 import { amountToTokenUnits, paymentRefToBytes32 } from "@obscurus/core";
 import { useMemo, useState } from "react";
+import { ThemeProvider } from "../../../components/theme-provider.tsx";
 import { readCheckoutConfig, walletPayEnabled } from "../../../lib/config.ts";
 import { postPayment, type CheckoutPayment } from "../../../lib/platform.ts";
 import { PrivacyInspector } from "./privacy-inspector.tsx";
@@ -69,7 +70,7 @@ export function PayClient({ payment }: { payment: CheckoutPayment }) {
   }
 
   return (
-    <>
+    <ThemeProvider theme={current.branding?.theme}>
       <h2>Protected by Obscurus</h2>
       {current.branding?.logo_url ? (
         // eslint-disable-next-line @next/next/no-img-element
@@ -106,6 +107,6 @@ export function PayClient({ payment }: { payment: CheckoutPayment }) {
         <PrivacyInspector amount={current.amount} asset={current.asset} serviceName={current.service_name} />
       </div>
       <p className="footer">No Apple Pay. No cards. No Obscurus wallet. WalletConnect connects; Obscurus verifies.</p>
-    </>
+    </ThemeProvider>
   );
 }

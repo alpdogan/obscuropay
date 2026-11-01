@@ -1,4 +1,5 @@
 import { platformUrl, type CheckoutConfig } from "./config.ts";
+import type { Theme } from "@obscurus/core";
 
 export type CheckoutPayment = {
   id: string;
@@ -10,7 +11,7 @@ export type CheckoutPayment = {
   service_name: string;
   settlement_address: string | null;
   checkout_url: string;
-  branding?: { display_name: string | null; logo_url: string | null };
+  branding?: { display_name: string | null; logo_url: string | null; theme?: Theme | null };
 };
 
 export async function fetchPayment(config: CheckoutConfig, paymentId: string): Promise<CheckoutPayment> {

@@ -15,7 +15,7 @@ export async function insertMerchant(
 export async function findMerchantByEmail(db: D1Database, email: string): Promise<MerchantRow | null> {
   return db
     .prepare(
-      "SELECT id, email, password_hash, settlement_address, display_name, logo_content_type FROM merchants WHERE email = ?",
+      "SELECT id, email, password_hash, settlement_address, display_name, logo_content_type, theme_config FROM merchants WHERE email = ?",
     )
     .bind(email)
     .first<MerchantRow>();
@@ -24,7 +24,7 @@ export async function findMerchantByEmail(db: D1Database, email: string): Promis
 export async function findMerchantById(db: D1Database, id: string): Promise<MerchantRow | null> {
   return db
     .prepare(
-      "SELECT id, email, password_hash, settlement_address, display_name, logo_content_type FROM merchants WHERE id = ?",
+      "SELECT id, email, password_hash, settlement_address, display_name, logo_content_type, theme_config FROM merchants WHERE id = ?",
     )
     .bind(id)
     .first<MerchantRow>();
@@ -77,4 +77,16 @@ export async function findMerchantLogo(
     .bind(merchantId)
     .first<{ content_type: string; bytes: ArrayBuffer }>();
   return row;
+}
+
+export async function updateMerchantTheme(
+  db: D1Database,
+  merchantId: string,
+  themeConfig: string,
+  now: number,
+): Promise<void> {
+  await db
+    .prepare("UPDATE merchants SET theme_config = ?, updated_at = ? WHERE id = ?")
+    .bind(themeConfig, now, merchantId)
+    .run();
 }
